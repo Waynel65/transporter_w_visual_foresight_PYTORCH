@@ -87,6 +87,7 @@ def main(unused_argv):
     # Train agent and save snapshots.
     # wayne: the training loop is here?
     while trainer.total_steps < FLAGS.n_steps: # n_steps by default is 60K
+      print("the CWD is", os.getcwd())
       trainer.train_pp(dataset, writer=writer, debug=FLAGS.debug)
 
       if trainer.total_steps % FLAGS.interval == 0:
