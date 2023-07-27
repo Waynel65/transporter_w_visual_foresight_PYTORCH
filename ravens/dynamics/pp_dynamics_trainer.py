@@ -5,6 +5,7 @@ import numpy as np
 from ravens.tasks import cameras
 from ravens.utils import utils
 from ravens.models.pp_dynamics import PPDynamics
+from torch.utils.tensorboard import SummaryWriter
 # import tensorflow as tf
 
 import matplotlib
@@ -203,7 +204,7 @@ class PPDynamicsTrainer:
     # tf.keras.backend.set_learning_phase(1)
 
     # Wayne: set to training mode
-    
+
 
     # Get a training sample.
     if real:
@@ -261,9 +262,11 @@ class PPDynamicsTrainer:
         repeat_H_lambda=self.repeat_H_lambda,
         h_only=self.h_only)
 
-    with writer.as_default():
-      sc = tf.summary.scalar
-      sc('train_loss/PP', loss, step)
+    # with writer.as_default():
+    #   sc = tf.summary.scalar
+    #   sc('train_loss/PP', loss, step)
+    if writer:
+        writer.add_scalar('train_loss/PP', loss, step)
     print(f'PP Dynamics -- Train Iter: {step} Loss: {loss:.4f}')
     self.total_steps = step
 
