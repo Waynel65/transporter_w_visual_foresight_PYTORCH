@@ -11,6 +11,9 @@ from ravens.dynamics.pp_dynamics_trainer import PPDynamicsTrainer
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+import sys
+
+print("SYSTEM path:", sys.path)
 
 flags.DEFINE_string('data_dir', './data_train', '')
 flags.DEFINE_string('root_dir', './', '')
