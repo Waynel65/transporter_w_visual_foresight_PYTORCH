@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import sys
 
-print("SYSTEM path:", sys.path)
+
 
 flags.DEFINE_string('data_dir', './data_train', '')
 flags.DEFINE_string('root_dir', './', '')
@@ -91,6 +91,7 @@ def main(unused_argv):
     # wayne: the training loop is here?
     while trainer.total_steps < FLAGS.n_steps: # n_steps by default is 60K
       print("the CWD is", os.getcwd())
+      print("SYSTEM path:", sys.path)
       trainer.train_pp(dataset, writer=writer, debug=FLAGS.debug)
 
       if trainer.total_steps % FLAGS.interval == 0:
