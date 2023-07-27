@@ -1,5 +1,6 @@
 """PP dynamics module."""
 
+import os
 import numpy as np
 from ravens.models.resnet import ResNet36_4s
 from ravens.models.resnet import ResNet43_8s
@@ -166,7 +167,7 @@ class PPDynamics(object):
         plt.show()    
 
       # Forward pass.
-      out_tens = self.model(in_img.unsqueeze(0)) # to account for the batch_size
+      out_tens = self.model(in_i1mg.unsqueeze(0)) # to account for the batch_size
 
       return out_tens
 
@@ -239,7 +240,8 @@ class PPDynamics(object):
   
   def save(self, filename):
     """Save the model."""
-    self.model.save(filename)
+    # self.model.save(filename)
+    torch.save(self.model.state_dict(), filename)
 
   def preprocess_input(self, img, h_only=False):
     """Pre-process input (subtract mean, divide by std)."""

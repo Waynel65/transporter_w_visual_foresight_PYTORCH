@@ -426,9 +426,10 @@ class PPDynamicsTrainer:
   def save_to_dir(self, model_dir, model_name):
     """Save model to path."""
 
-    if not tf.io.gfile.exists(model_dir):
-      tf.io.gfile.makedirs(model_dir)
-    model_fname = f'{model_name}-ckpt-{self.total_steps}.h5'
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    # model_fname = f'{model_name}-ckpt-{self.total_steps}.h5'
+    model_fname = f'{model_name}-ckpt-{self.total_steps}.pth' # the file ext that works with pytorch
     model_path = os.path.join(model_dir, model_fname)
     self.dynamics.save(model_path)
 
