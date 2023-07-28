@@ -112,64 +112,64 @@ class PPDynamics(object):
 
 
 
-    def forward_pp(self, init_img, p0, p1, p1_theta):
-      """Forward pass."""
+  def forward_pp(self, init_img, p0, p1, p1_theta):
+    """Forward pass."""
+    
+    # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
+    init_img = torch.from_numpy(init_img.transpose((2, 0, 1))).to(self.device)
+
+    # Pick mask.
+    init_shape = init_img.shape
+    pick_mask = torch.zeros((init_shape[1], init_shape[2]), device=self.device)
+    pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
+
+    # Place mask 
+    # a square mask that has the same size as the image and is centered at p_pick
+    # but only contain positive values and 0s
+    # positive values for the square region centered at p_pick (the area around picking position)
+    # 0s for everywhere else
+    pivot = torch.tensor([p0[1], p0[0]]).to(self.device) + self.pad_size
+    rmat = utils.get_image_transform(p1_theta, (0, 0), pivot)
+    rvec = rmat.view(-1)[:-1]
+    init_tens_rot = torchvision.transforms.functional.affine(init_img, angle=0, translate=(0, 0), scale=1, shear=0, resample=0, fillcolor=None)
+    crop = init_tens_rot[p0[0]:(p0[0] + self.mask_size),
+                        p0[1]:(p0[1] + self.mask_size), :]
+    place_mask = torch.zeros(init_shape, device=self.device) 
+    place_mask[:, p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size)] = crop
+
+    # Concateante init_img, pick_mask, and place_mask.
+    # this in_img will be the input into the network
+    in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
+
+    # Debug
+    if False:
+      import matplotlib
+      matplotlib.use('TkAgg')
+      import matplotlib.pyplot as plt
+      print(f"in_img: {in_img.shape}")
+      print(f"pick_mask: {pick_mask.shape}")
+      print(f"place_mask: {place_mask.shape}")
       
-      # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
-      init_img = torch.from_numpy(init_img.transpose((2, 0, 1))).to(self.device)
+      # # h_only
+      # f, ax = plt.subplots(1, 5)
+      # ax[0].imshow(in_img[:, :, 0])
+      # ax[1].imshow(in_img[:, :, 1])
+      # ax[2].imshow(in_img[:, :, 2])
+      # ax[3].imshow(in_img[:, :, 0] + in_img[:, :, 1])
+      # ax[4].imshow(in_img[:, :, 0] + in_img[:, :, 2])
+      
+      # full
+      f, ax = plt.subplots(4)
+      ax[0].imshow(in_img[:, :, 3] + pick_mask)
+      ax[1].imshow(in_img[:, :, 3] + place_mask[:, :, 3])
+      ax[2].imshow(in_img[:, :, 0])
+      ax[3].imshow(in_img[:, :, 0] + place_mask[:, :, 0])
+      plt.show()    
 
-      # Pick mask.
-      init_shape = init_img.shape
-      pick_mask = torch.zeros((init_shape[1], init_shape[2]), device=self.device)
-      pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
+    # Forward pass.
+    out_tens = self.model(in_i1mg.unsqueeze(0)) # to account for the batch_size
 
-      # Place mask 
-      # a square mask that has the same size as the image and is centered at p_pick
-      # but only contain positive values and 0s
-      # positive values for the square region centered at p_pick (the area around picking position)
-      # 0s for everywhere else
-      pivot = torch.tensor([p0[1], p0[0]]).to(self.device) + self.pad_size
-      rmat = utils.get_image_transform(p1_theta, (0, 0), pivot)
-      rvec = rmat.view(-1)[:-1]
-      init_tens_rot = torchvision.transforms.functional.affine(init_img, angle=0, translate=(0, 0), scale=1, shear=0, resample=0, fillcolor=None)
-      crop = init_tens_rot[p0[0]:(p0[0] + self.mask_size),
-                          p0[1]:(p0[1] + self.mask_size), :]
-      place_mask = torch.zeros(init_shape, device=self.device) 
-      place_mask[:, p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size)] = crop
-
-      # Concateante init_img, pick_mask, and place_mask.
-      # this in_img will be the input into the network
-      in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
-
-      # Debug
-      if False:
-        import matplotlib
-        matplotlib.use('TkAgg')
-        import matplotlib.pyplot as plt
-        print(f"in_img: {in_img.shape}")
-        print(f"pick_mask: {pick_mask.shape}")
-        print(f"place_mask: {place_mask.shape}")
-        
-        # # h_only
-        # f, ax = plt.subplots(1, 5)
-        # ax[0].imshow(in_img[:, :, 0])
-        # ax[1].imshow(in_img[:, :, 1])
-        # ax[2].imshow(in_img[:, :, 2])
-        # ax[3].imshow(in_img[:, :, 0] + in_img[:, :, 1])
-        # ax[4].imshow(in_img[:, :, 0] + in_img[:, :, 2])
-        
-        # full
-        f, ax = plt.subplots(4)
-        ax[0].imshow(in_img[:, :, 3] + pick_mask)
-        ax[1].imshow(in_img[:, :, 3] + place_mask[:, :, 3])
-        ax[2].imshow(in_img[:, :, 0])
-        ax[3].imshow(in_img[:, :, 0] + place_mask[:, :, 0])
-        plt.show()    
-
-      # Forward pass.
-      out_tens = self.model(in_i1mg.unsqueeze(0)) # to account for the batch_size
-
-      return out_tens
+    return out_tens
 
 
   def imagine(self, init_img, p0, p1, p1_theta, h_only):
