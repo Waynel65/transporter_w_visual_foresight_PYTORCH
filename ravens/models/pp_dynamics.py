@@ -24,7 +24,7 @@ class PPDynamics(object):
     self.padding[:2, :] = self.pad_size
     in_shape = np.array(in_shape)
     in_shape[0:2] += self.pad_size * 2
-    in_shape = tuple(in_shape)
+    in_shape = tuple(in_shape) # should be in the form of (height, width, channels)
     print(f"[PPDynamics] in_shape after padding: {in_shape}")
     
     # Initialize the model.
@@ -32,9 +32,9 @@ class PPDynamics(object):
     print(f"[PPDynamics] Model is {self.model_name}")
     if self.model_name == 'resnet_lite':
       # d_in, d_out = ResNet36_4s(in_shape, out_channel)
-      self.model = ResNet36_4s(in_shape, out_channel).to(device) # Wayne: instantiate the model here
+      self.model = ResNet36_4s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
     elif self.model_name == 'resnet':
-      self.model = ResNet43_8s(in_shape, out_channel).to(device) # Wayne: instantiate the model here
+      self.model = ResNet43_8s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
     # self.model = tf.keras.models.Model(inputs=[d_in], outputs=[d_out])
     # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
     self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
