@@ -204,8 +204,8 @@ class ResNet36_4s(nn.Module):
 
             self.upsample_3 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-            self.conv_block5 = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, include_batchnorm=include_batchnorm, activation=False)
-            self.identity_block5 = IdentityBlock(64, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm, activation=False)
+            self.conv_block5 = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+            self.identity_block5 = IdentityBlock(64, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm)
 
     def forward(self, x):
         x = self.conv1(x)
