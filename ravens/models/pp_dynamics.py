@@ -117,7 +117,8 @@ class PPDynamics(object):
     
     # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
     init_img = init_img[np.newaxis, :, :]
-    init_img = torch.from_numpy(init_img).to(self.device)
+    print(f"DEBUG: type of init_image - {type(init_image)}. Size: {init_img.shape}")
+    init_img = (init_img).to(self.device)
 
     # Pick mask.
     init_shape = init_img.shape
