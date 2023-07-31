@@ -118,7 +118,9 @@ class PPDynamics(object):
     # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
     # init_img = init_img[np.newaxis, :, :]
     print(f"DEBUG: type of init_image - {type(init_img)}. Size: {init_img.shape}")
-    init_img = (init_img).to(self.device)
+    # init_img = (init_img).to(self.device)
+    init_img = init_img.permute(2, 0, 1)
+
 
     # Pick mask.
     init_shape = init_img.shape
@@ -142,7 +144,7 @@ class PPDynamics(object):
     # Concateante init_img, pick_mask, and place_mask.
     # this in_img will be the input into the network
     in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
-
+    in_img = in_img.to(self.device)
     # Debug
     if False:
       import matplotlib
