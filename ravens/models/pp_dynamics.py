@@ -116,6 +116,7 @@ class PPDynamics(object):
     """Forward pass."""
     
     # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
+    init_img = init_img[np.newaxis, :, :]
     init_img = torch.from_numpy(init_img.transpose((2, 0, 1))).to(self.device)
 
     # Pick mask.
@@ -167,7 +168,7 @@ class PPDynamics(object):
       plt.show()    
 
     # Forward pass.
-    out_tens = self.model(in_i1mg.unsqueeze(0)) # to account for the batch_size
+    out_tens = self.model(in_img.unsqueeze(0)) # to account for the batch_size
 
     return out_tens
 
