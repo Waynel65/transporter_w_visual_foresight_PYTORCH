@@ -116,7 +116,7 @@ class PPDynamics(object):
     """Forward pass."""
     
     # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
-    init_img = init_img[np.newaxis, :, :]
+    # init_img = init_img[np.newaxis, :, :]
     print(f"DEBUG: type of init_image - {type(init_img)}. Size: {init_img.shape}")
     init_img = (init_img).to(self.device)
 
