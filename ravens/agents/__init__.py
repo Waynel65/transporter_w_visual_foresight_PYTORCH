@@ -25,14 +25,14 @@ from ravens.agents.gt_state_2_step import GtState3Step6DAgent
 from ravens.agents.transporter import OriginalTransporterAgent
 
 
-names = {'dummy': DummyAgent,
-         'transporter': OriginalTransporterAgent,
-         'conv_mlp': PickPlaceConvMlpAgent,
-         'form2fit': Form2FitAgent,
-         'gt_state': GtStateAgent,
-         'gt_state_2_step': GtState2StepAgent,
-         'gt_state_6d': GtState6DAgent,
-         'gt_state_6d_3_step': GtState3Step6DAgent}
+# names = {'dummy': DummyAgent,
+#          'transporter': OriginalTransporterAgent,
+#          'conv_mlp': PickPlaceConvMlpAgent,
+#          'form2fit': Form2FitAgent,
+#          'gt_state': GtStateAgent,
+#          'gt_state_2_step': GtState2StepAgent,
+#          'gt_state_6d': GtState6DAgent,
+#          'gt_state_6d_3_step': GtState3Step6DAgent}
 
 names_test = {'dummy': 'DummyAgent',
          'transporter': 'OriginalTransporterAgent',
