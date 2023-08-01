@@ -15,7 +15,7 @@ from ravens.agents.gt_state_2_step import GtState2StepAgent
 # Daniel: adding a bunch of transporter-goal agents.
 names = {'dummy':                   DummyAgent,
          'transporter':             OriginalTransporterAgent,
-         'transporter-goal':        GoalTransporterAgent,
+         'transporter-goal':        GoalTransporterAgent, ## this is the default model used
          'transporter-goal-naive':  GoalNaiveTransporterAgent,
          'transporter-goal-snaive': GoalSuperNaiveTransporterAgent,
          'no_transport':            NoTransportTransporterAgent,
