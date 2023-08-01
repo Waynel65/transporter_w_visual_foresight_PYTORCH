@@ -47,7 +47,7 @@ if __name__ == '__main__':
     # else:
     #     cfg.set_visible_devices(gpus[int(args.gpu)], 'GPU')
 
-    num_gpus = torch.cuda.device.count()
+    num_gpus = torch.cuda.device_count()
     if num_gpus == 0:
         print('No GPUs detected. Running with CPU.')
         device = torch.device("cpu")
