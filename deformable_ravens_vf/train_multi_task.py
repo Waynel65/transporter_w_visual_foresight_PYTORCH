@@ -104,7 +104,7 @@ if __name__ == '__main__':
             name += '-sub_g'
         else:
             name += '-fin_g'
-        agent_test = agents.names_test[args.agent]
+        agent_test = agents.names[args.agent]
         print(f"args.agent is {args.agent}")
         print(f"The agent used is {agent_test}")
         agent = agents.names[args.agent](
