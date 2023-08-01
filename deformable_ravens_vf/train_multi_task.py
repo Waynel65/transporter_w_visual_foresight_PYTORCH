@@ -10,6 +10,7 @@ import tensorflow as tf
 from ravens import agents
 from ravens.dataset_multi import DatasetMulti
 
+import torch
 # set up torch tensorboard summary writer
 from torch.utils.tensorboard import SummaryWriter
 
