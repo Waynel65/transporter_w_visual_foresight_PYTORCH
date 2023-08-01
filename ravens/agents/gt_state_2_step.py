@@ -35,11 +35,15 @@ class GtState2StepAgent(GtStateAgent):
     # Set up model.
     self.pick_model = None
     self.place_model = None
+    # self.total_iter = 0 # wayne: why they didn't define it in the original code???
+    # self.pick_optim = tf.keras.optimizers.Adam(learning_rate=2e-4)
+    # self.place_optim = tf.keras.optimizers.Adam(learning_rate=2e-4)
+    # self.metric = tf.keras.metrics.Mean(name='metric')
+    # self.val_metric = tf.keras.metrics.Mean(name='val_metric')
 
-    self.pick_optim = tf.keras.optimizers.Adam(learning_rate=2e-4)
-    self.place_optim = tf.keras.optimizers.Adam(learning_rate=2e-4)
-    self.metric = tf.keras.metrics.Mean(name='metric')
-    self.val_metric = tf.keras.metrics.Mean(name='val_metric')
+    self.pick_optim = torch.optim.Adam(self.model.parameters(), lr=2e-4)
+
+
 
   def init_model(self, dataset):
     """Initialize models, including normalization parameters."""
@@ -105,31 +109,26 @@ class GtState2StepAgent(GtStateAgent):
     if self.use_mdn:
       loss_criterion = mdn_utils.mdn_loss
     else:
-      loss_criterion = tf.keras.losses.MeanSquaredError()
+      # loss_criterion = tf.keras.losses.MeanSquaredError()
+      loss_criterion = nn.MSELoss()
 
-    @tf.function
-    def train_step(pick_model, place_model, batch_obs, batch_act,
-                   loss_criterion):
-      # training the pick model here
-      with tf.GradientTape() as tape:
+    def train_step(pick_model, place_model, batch_obs, batch_act, loss_criterion):
+        # Training the pick model here
+        pick_model.zero_grad()
         prediction = pick_model(batch_obs)
         loss0 = loss_criterion(batch_act[:, 0:3], prediction)
-        grad = tape.gradient(loss0, pick_model.trainable_variables)
-        self.pick_optim.apply_gradients(
-            zip(grad, pick_model.trainable_variables))
+        loss0.backward()
+        self.pick_optim.step()
 
-      # training the place model here
-      with tf.GradientTape() as tape:
-        # batch_obs = tf.concat((batch_obs, batch_act[:,0:3] +
-        #                        tf.random.normal(shape=batch_act[:,0:3].shape,
-        #                                         stddev=0.001)), axis=1)
-        batch_obs = tf.concat((batch_obs, batch_act[:, 0:3]), axis=1)
+        # Training the place model here
+        place_model.zero_grad()
+        batch_obs = torch.cat((batch_obs, batch_act[:, 0:3]), dim=1)
         prediction = place_model(batch_obs)
         loss1 = loss_criterion(batch_act[:, 3:], prediction)
-        grad = tape.gradient(loss1, place_model.trainable_variables)
-        self.place_optim.apply_gradients(
-            zip(grad, place_model.trainable_variables))
-      return loss0 + loss1
+        loss1.backward()
+        self.place_optim.step()
+
+        return loss0.item() + loss1.item()
 
     print_rate = 100
     for i in range(num_iter):
@@ -138,13 +137,13 @@ class GtState2StepAgent(GtStateAgent):
       batch_obs, batch_act, _, _, _ = self.get_data_batch(dataset)
 
       # Forward through model, compute training loss, update weights.
-      self.metric.reset_states()
+      # self.metric.reset_states()
       loss = train_step(self.pick_model, self.place_model, batch_obs, batch_act,
                         loss_criterion)
-      self.metric(loss)
-      with writer.as_default():
-        tf.summary.scalar(
-            'gt_state_loss', self.metric.result(), step=self.total_iter + i)
+      # self.metric(loss)
+      # with writer.as_default():
+      #   tf.summary.scalar(
+      #       'gt_state_loss', self.metric.result(), step=self.total_iter + i)
 
       if i % print_rate == 0:
         loss = np.float32(loss)

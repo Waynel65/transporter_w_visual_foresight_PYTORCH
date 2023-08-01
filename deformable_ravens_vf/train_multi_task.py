@@ -10,6 +10,9 @@ import tensorflow as tf
 from ravens import agents
 from ravens.dataset_multi import DatasetMulti
 
+# set up torch tensorboard summary writer
+from torch.utils.tensorboard import SummaryWriter
+
 task_list = [
   'stack-tower',
   'stack-pyramid',  
@@ -36,19 +39,31 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Configure which GPU to use.
-    cfg = tf.config.experimental
-    gpus = cfg.list_physical_devices('GPU')
-    if len(gpus) == 0:
-        print('No GPUs detected. Running with CPU.')
-    else:
-        cfg.set_visible_devices(gpus[int(args.gpu)], 'GPU')
+    # cfg = tf.config.experimental
+    # gpus = cfg.list_physical_devices('GPU')
+    # if len(gpus) == 0:
+    #     print('No GPUs detected. Running with CPU.')
+    # else:
+    #     cfg.set_visible_devices(gpus[int(args.gpu)], 'GPU')
 
-    # Configure how much GPU to use.
-    if args.gpu_mem_limit is not None:
-        MEM_LIMIT = 1024 * int(args.gpu_mem_limit)
-        print(args.gpu_mem_limit)
-        dev_cfg = [cfg.VirtualDeviceConfiguration(memory_limit=MEM_LIMIT)]
-        cfg.set_virtual_device_configuration(gpus[0], dev_cfg)
+    num_gpus = torch.cuda.device.count()
+    if num_gpus == 0:
+        print('No GPUs detected. Running with CPU.')
+        device = torch.device("cpu")
+    else:
+        device_id = int(args.gpu) # assuming args.gpu contains the GPU id you want to use
+        if device_id >= num_gpus:
+            print(f"Invalid GPU id {device_id}. Only {num_gpus} GPUs available.")
+        else:
+            device = torch.device(f"cuda:{device_id}")
+
+
+    # # Configure how much GPU to use.
+    # if args.gpu_mem_limit is not None:
+    #     MEM_LIMIT = 1024 * int(args.gpu_mem_limit)
+    #     print(args.gpu_mem_limit)
+    #     dev_cfg = [cfg.VirtualDeviceConfiguration(memory_limit=MEM_LIMIT)]
+    #     cfg.set_virtual_device_configuration(gpus[0], dev_cfg)
 
     if args.data_dir is None:
         raise ValueError("data_dir should be specified! python train_multi_task.py --data_dir=/dir/to/training/data")
@@ -73,7 +88,7 @@ if __name__ == '__main__':
         # Set up tensorboard logger.
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         train_log_dir = os.path.join('logs', args.agent, current_time, 'train')
-        train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+        train_summary_writer = SummaryWriter(train_log_dir)
 
         # Set the beginning of the agent name.
         name = f'GCTN-Multi-{args.agent}-{args.num_demos}-{train_run}'
@@ -88,6 +103,7 @@ if __name__ == '__main__':
             name += '-sub_g'
         else:
             name += '-fin_g'
+        print(f"args.agent is {args.agent}")
         agent = agents.names[args.agent](
             name, args.task, num_rotations=args.num_rots, models_dir=args.models_dir)
 
