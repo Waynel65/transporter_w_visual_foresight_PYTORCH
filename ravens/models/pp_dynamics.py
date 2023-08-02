@@ -140,7 +140,8 @@ class PPDynamics(object):
     angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
 
     # Rotation using PyTorch's rotate
-    rotated = rotate(init_img, angle, resample=0) # rotate function in torchvision.functional
+    # default is Interpolation Mode = Nearest
+    rotated = rotate(init_img, angle) # rotate function in torchvision.functional
 
     # Crop and placement
     crop = rotated[:, p0[0]:(p0[0] + self.mask_size), p0[1]:(p0[1] + self.mask_size)]
@@ -201,9 +202,6 @@ class PPDynamics(object):
       ax[2].imshow(in_img[:, :, 0])
       ax[3].imshow(in_img[:, :, 0] + place_mask[:, :, 0])
       plt.show()    
-
-    # Concatenate init_img, pick_mask, and place_mask.
-    in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
 
     # Add batch dimension
     in_tens = in_img.unsqueeze(0)
