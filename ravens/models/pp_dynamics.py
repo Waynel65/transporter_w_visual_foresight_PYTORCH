@@ -87,7 +87,7 @@ class PPDynamics(object):
 
     # Convert numpy arrays to PyTorch tensors
     # so that we can use torchvision's rotate
-    init_img = torch.from_numpy(init_img)
+    init_img = torch.from_numpy(init_img).to(self.device).float()
     target_img = torch.from_numpy(target_img).to(self.device).float()
 
     # Forward pass.
@@ -213,7 +213,6 @@ class PPDynamics(object):
 
     # Add batch dimension
     in_tens = in_img.unsqueeze(0)
-    in_tens = in_tens.to(self.device)
 
     # Forward pass.
     print(f"in_tens into model has shape of {in_tens.shape}")
