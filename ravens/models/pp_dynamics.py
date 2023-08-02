@@ -91,11 +91,15 @@ class PPDynamics(object):
     target_img = torch.from_numpy(target_img).to(self.device).float()
 
 
+
     # Forward pass.
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
+    out_tens = out_tens.squeeze(0)  # remove the batch dimension
+    out_tens = out_tens.permute(1, 2, 0)  # change the order of dimensions
+
 
     print(f"[PP Dynamics]: out_tens dim: {out_tens.shape} and target_img dim: {target_img.shape}")
-    
+
     # Get loss.
     diff = torch.abs(target_img - out_tens)
     b, h, w, c = diff.shape
