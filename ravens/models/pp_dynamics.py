@@ -118,10 +118,11 @@ class PPDynamics(object):
     """Forward pass."""
 
     # init_img should come in as a numpy matrix
-    print(f"the type of init_img is {type(init_img)} and the dimension is {init_img.shape}")
     # Pick mask.
     # a mask that is positive around the center but zero elsewhere
+    init_img = init_img.permute(2,0,1)
     init_shape = init_img.shape
+    print(f"the type of init_img is {type(init_img)} and the dimension is {init_shape}")
     pick_mask = torch.zeros(init_shape[1], init_shape[2])
     pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
 
