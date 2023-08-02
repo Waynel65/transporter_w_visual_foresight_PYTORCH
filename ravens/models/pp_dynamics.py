@@ -94,30 +94,30 @@ class PPDynamics(object):
 
     # Forward pass.
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
-    out_tens = out_tens.squeeze(0)  # remove the batch dimension
-    out_tens = out_tens.permute(1, 2, 0)  # change the order of dimensions
 
+    # Convert target_img from (Height, Width, Channel) to (Batch, Channel, Height, Width)
+    target_img = torch.Tensor(target_img).permute(2, 0, 1).unsqueeze(0)
 
     print(f"[PP Dynamics]: out_tens dim: {out_tens.shape} and target_img dim: {target_img.shape}")
 
     # Get loss.
     diff = torch.abs(target_img - out_tens)
-    b, h, w, c = diff.shape
+    b, c, h, w = diff.shape
 
     if h_only:
       loss = torch.mean(diff)
     else:
-      loss_R = torch.sum(diff[:, :, :, 0])
-      loss_G = torch.sum(diff[:, :, :, 1])
-      loss_B = torch.sum(diff[:, :, :, 2])
-      loss_H = torch.sum(diff[:, :, :, 3])
+      loss_R = torch.sum(diff[:, 0, :, :])
+      loss_G = torch.sum(diff[:, 1, :, :])
+      loss_B = torch.sum(diff[:, 2, :, :])
+      loss_H = torch.sum(diff[:, 3, :, :])
       loss = (loss_R + loss_G + loss_B + repeat_H_lambda * loss_H) / (b * h * w * c)
 
     # Backpropagate
     if backprop:
       loss.backward()
       self.optim.step()
-    
+      
     return loss.item()
 
 
