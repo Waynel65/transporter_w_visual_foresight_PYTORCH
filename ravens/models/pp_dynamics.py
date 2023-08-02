@@ -125,6 +125,7 @@ class PPDynamics(object):
     print(f"the type of init_img is {type(init_img)} and the dimension is {init_shape}")
     pick_mask = torch.zeros(init_shape[1], init_shape[2])
     pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
+    pick_mask = pick_mask.to(self.device)
 
     # Place mask (to represent T_place)
     # 1. rorate o_t by delta theta
@@ -147,6 +148,7 @@ class PPDynamics(object):
     crop = rotated[:, p0[0]:(p0[0] + self.mask_size), p0[1]:(p0[1] + self.mask_size)]
     place_mask = torch.zeros_like(rotated)
     place_mask[:, p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size)] = crop
+    place_mask = place_mask.to(self.device)
 
     # Concatenate init_img, pick_mask, and place_mask.
     in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
