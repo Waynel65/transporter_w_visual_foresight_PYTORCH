@@ -7,6 +7,7 @@ from ravens.models.resnet import ResNet43_8s
 from ravens.utils import utils
 # import tensorflow as tf
 import torch
+from torchvision.transforms.functional import rotate
 # from tensorflow_addons import image as tfa_image
 
 
@@ -84,6 +85,7 @@ class PPDynamics(object):
     target_img = np.pad(target_img, self.padding, mode='constant')
 
     # Convert numpy arrays to PyTorch tensors
+    # so that we can use torchvision's rotate
     init_img = torch.from_numpy(init_img).to(self.device).float()
     target_img = torch.from_numpy(target_img).to(self.device).float()
 
@@ -114,37 +116,66 @@ class PPDynamics(object):
 
   def forward_pp(self, init_img, p0, p1, p1_theta):
     """Forward pass."""
-    
-    # PyTorch uses (C,H,W) convention and TensorFlow uses (H,W,C) so you might need to transpose your data before using it
-    # init_img = init_img[np.newaxis, :, :]
-    print(f"DEBUG: type of init_image - {type(init_img)}. Size: {init_img.shape}")
-    # init_img = (init_img).to(self.device)
-    init_img = init_img.permute(2, 0, 1)
 
+    # init_img should come in as a numpy matrix
 
     # Pick mask.
+    # a mask that is positive around the center but zero elsewhere
     init_shape = init_img.shape
-    pick_mask = torch.zeros((init_shape[1], init_shape[2]), device=self.device)
+    pick_mask = torch.zeros(init_shape[1], init_shape[2])
     pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
 
-    # Place mask 
-    # a square mask that has the same size as the image and is centered at p_pick
-    # but only contain positive values and 0s
-    # positive values for the square region centered at p_pick (the area around picking position)
-    # 0s for everywhere else
-    pivot = torch.tensor([p0[1], p0[0]]).to(self.device) + self.pad_size
-    rmat = utils.get_image_transform(p1_theta, (0, 0), pivot)
-    rvec = rmat.view(-1)[:-1]
-    init_tens_rot = torchvision.transforms.functional.affine(init_img, angle=0, translate=(0, 0), scale=1, shear=0, resample=0, fillcolor=None)
-    crop = init_tens_rot[p0[0]:(p0[0] + self.mask_size),
-                        p0[1]:(p0[1] + self.mask_size), :]
-    place_mask = torch.zeros(init_shape, device=self.device) 
+    # Place mask (to represent T_place)
+    # 1. rorate o_t by delta theta
+    # 2. the rotated obs is then cropped with a square of the same size as the mask
+    # 3. the cropped image is pasted on a zero image at p_place to create M_place
+    # 4. the FCN takes the concatenated image of M_pick, o_t and M_place
+    # init_tens = tf.convert_to_tensor(init_img, dtype=tf.float32)
+    pivot = np.array([p0[1], p0[0]]) + self.pad_size
+    rmat = utils.get_image_transform(p1_theta, (0, 0), pivot) # this doesn't use tf
+    rvec = rmat.reshape(-1)[:-1]
+
+    # Calculate rotation angle in degrees
+    angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+
+    # Rotation using PyTorch's rotate
+    rotated = rotate(init_img, angle, resample=0) # rotate function in torchvision.functional
+
+    # Crop and placement
+    crop = rotated[:, p0[0]:(p0[0] + self.mask_size), p0[1]:(p0[1] + self.mask_size)]
+    place_mask = torch.zeros_like(rotated)
     place_mask[:, p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size)] = crop
 
-    # Concateante init_img, pick_mask, and place_mask.
-    # this in_img will be the input into the network
+    # Concatenate init_img, pick_mask, and place_mask.
     in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
-    in_img = in_img.to(self.device)
+
+    # Debug paper
+    if False:
+      import matplotlib
+      matplotlib.use('TkAgg')
+      import matplotlib.pyplot as plt
+      max_height = 0.14
+      norm = matplotlib.colors.Normalize(vmin=0.0, vmax=max_height)
+      f, ax = plt.subplots(3)
+      init_img_copy = np.copy(init_img)
+      original_init_img = self.postprocess_output(init_img_copy)
+      original_init_img = original_init_img[int(self.mask_size/2): -int(self.mask_size/2), int(self.mask_size/2): -int(self.mask_size/2), :]
+      original_init_img[p0[0], p0[1], :] = 0.0
+      original_init_img[p1[0], p1[1], :] = 0.0
+      no_pad_pick_mask = np.copy(pick_mask[int(self.mask_size/2): -int(self.mask_size/2), int(self.mask_size/2): -int(self.mask_size/2)])
+      original_pick_mask = np.concatenate([no_pad_pick_mask[Ellipsis, None], 
+          no_pad_pick_mask[Ellipsis, None], no_pad_pick_mask[Ellipsis, None]], axis=2)
+      place_mask_copy = np.copy(place_mask)
+      no_pad_place_mask = self.postprocess_output(place_mask_copy)
+      original_place_mask = np.zeros(place_mask_copy.shape)
+      original_place_mask[p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size), :] = no_pad_place_mask[p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size), :] 
+      original_place_mask = original_place_mask[int(self.mask_size/2): -int(self.mask_size/2), int(self.mask_size/2): -int(self.mask_size/2)]
+      ax[0].imshow(original_init_img[:, :, :3] / 255.0)
+      ax[1].imshow(original_pick_mask * 255.0)
+      # ax[2].imshow((original_place_mask[:, :, :3] + original_init_img[:, :, :3])/ 255.0)
+      ax[2].imshow(original_place_mask[:, :, :3]/ 255.0)
+      plt.show()
+
     # Debug
     if False:
       import matplotlib
@@ -170,8 +201,14 @@ class PPDynamics(object):
       ax[3].imshow(in_img[:, :, 0] + place_mask[:, :, 0])
       plt.show()    
 
+    # Concatenate init_img, pick_mask, and place_mask.
+    in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
+
+    # Add batch dimension
+    in_tens = in_img.unsqueeze(0)
+
     # Forward pass.
-    out_tens = self.model(in_img.unsqueeze(0)) # to account for the batch_size
+    out_tens = self.model(in_tens)
 
     return out_tens
 
