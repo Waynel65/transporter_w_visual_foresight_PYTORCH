@@ -157,12 +157,12 @@ class TransporterAgent:
             if self.attn_no_targ and self.use_goal_image:
                 maxdim = int(input_image.shape[2] / 2)
                 input_only = input_image[:, :, :maxdim]
-                loss0 = self.attention_model.train(input_only, p0, p0_theta)
+                loss0 = self.attention_model.train(input_only, p0, p0_theta) # defined in child class
             else:
                 loss0 = self.attention_model.train(input_image, p0, p0_theta)
-            with writer.as_default():
-                tf.summary.scalar('attention_loss', self.attention_model.metric.result(),
-                    step=self.total_iter+i)
+            # with writer.as_default():
+            #     tf.summary.scalar('attention_loss', self.attention_model.metric.result(),
+            #         step=self.total_iter+i)
 
             # Compute Transport training loss.
             if isinstance(self.transport_model, Attention):

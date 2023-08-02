@@ -89,7 +89,7 @@ if __name__ == '__main__':
         # Set up tensorboard logger.
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         train_log_dir = os.path.join('logs', args.agent, current_time, 'train')
-        train_summary_writer = SummaryWriter(train_log_dir)
+        train_summary_writer = SummaryWriter(train_log_dir) # need to fix this
 
         # Set the beginning of the agent name.
         name = f'GCTN-Multi-{args.agent}-{args.num_demos}-{train_run}'
@@ -105,6 +105,7 @@ if __name__ == '__main__':
         else:
             name += '-fin_g'
 
+        ## this is by default a transporter-goal model
         agent = agents.names[args.agent](
             name, args.task, num_rotations=args.num_rots, models_dir=args.models_dir)
 
