@@ -26,7 +26,8 @@ class PPDynamics(object):
     in_shape = np.array(in_shape)
     in_shape[0:2] += self.pad_size * 2
     in_shape = tuple(in_shape) # should be in the form of (height, width, channels)
-    print(f"[PPDynamics] in_shape after padding: {in_shape}")
+    print(f"[PPDynamics] in_shape after padding: {in_shape}") # (204,204,9)
+    # out_channel is set to 4
     
     # Initialize the model.
     self.model_name = model_name
@@ -152,7 +153,6 @@ class PPDynamics(object):
 
     # Concatenate init_img, pick_mask, and place_mask.
     in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
-    print(f"in_img into model has shape of {in_img.shape}")
 
     # Debug paper
     if False:
@@ -210,6 +210,7 @@ class PPDynamics(object):
     in_tens = in_img.unsqueeze(0)
 
     # Forward pass.
+    print(f"in_tens into model has shape of {in_tens.shape}")
     out_tens = self.model(in_tens)
 
     return out_tens
