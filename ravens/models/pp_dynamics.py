@@ -118,7 +118,7 @@ class PPDynamics(object):
     """Forward pass."""
 
     # init_img should come in as a numpy matrix
-
+    print(f"the type of init_img is {type(init_img)} and the dimension is {init_img.shape}")
     # Pick mask.
     # a mask that is positive around the center but zero elsewhere
     init_shape = init_img.shape
