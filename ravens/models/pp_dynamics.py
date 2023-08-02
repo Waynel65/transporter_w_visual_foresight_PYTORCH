@@ -152,6 +152,7 @@ class PPDynamics(object):
 
     # Concatenate init_img, pick_mask, and place_mask.
     in_img = torch.cat([init_img, pick_mask.unsqueeze(0), place_mask], dim=0)
+    print(f"in_img into model has shape of {in_img.shape}")
 
     # Debug paper
     if False:

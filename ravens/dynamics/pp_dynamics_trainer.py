@@ -42,6 +42,7 @@ class PPDynamicsTrainer:
       self.in_shape = (160, 160, 3)  # H + pick_mask + place_mask
       self.out_shape = (160, 160, 1) # H
     else:
+      # h_only is set to false by default
       self.in_shape = (160, 160, 9) # RGBH + pick_mask + place_mask
       self.out_shape = (160, 160, 4) # RGBH
 
