@@ -94,7 +94,7 @@ class PPDynamics(object):
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
 
     # Convert target_img from (Height, Width, Channel) to (Batch, Channel, Height, Width)
-    target_img = torch.Tensor(target_img).permute(2, 0, 1).unsqueeze(0)
+    target_img = target_img.permute(2, 0, 1).unsqueeze(0)
 
     print(f"[PP Dynamics]: out_tens dim: {out_tens.shape} and target_img dim: {target_img.shape}")
 
