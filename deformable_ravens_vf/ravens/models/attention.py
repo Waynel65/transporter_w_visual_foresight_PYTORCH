@@ -75,6 +75,7 @@ class Attention:
         # Forward pass.
         logits = []
         for x in torch.split(in_tens, 1):
+            x = x.permute(0, 3, 1, 2)
             logits.append(self.model(x))
         logits = torch.cat(logits, dim=0)
 
