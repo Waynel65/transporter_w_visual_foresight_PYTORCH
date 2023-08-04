@@ -68,7 +68,9 @@ class Attention:
         rvecs = self.get_se2(self.num_rotations, pivot)
         in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
         for i in range(self.num_rotations):
-            in_tens[i] = TF.rotate(in_tens[i], rvecs[i])
+            rvec = rvecs[i]
+            angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+            in_tens[i] = TF.rotate(in_tens[i], rvec[i])
 
         # Forward pass.
         logits = []
