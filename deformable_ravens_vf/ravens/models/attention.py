@@ -40,75 +40,80 @@ class Attention:
 
         # Initialize fully convolutional Residual Network with 43 layers and
         # 8-stride (3 2x2 max pools and 3 2x bilinear upsampling)
-        d_in, d_out = ResNet43_8s(input_shape, 1)
-        self.model = tf.keras.models.Model(inputs=[d_in], outputs=[d_out])
-        self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
-        self.metric = tf.keras.metrics.Mean(name='attention_loss')
+        # d_in, d_out = ResNet43_8s(input_shape, 1)
+        # self.model = tf.keras.models.Model(inputs=[d_in], outputs=[d_out])
+        # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
+        # self.metric = tf.keras.metrics.Mean(name='attention_loss')
 
-    def forward(self, in_img, apply_softmax=True):
-        """Forward pass.
+        if lite:
+            # d_in, d_out = ResNet36_4s(in_shape, 1)
+            self.model = ResNet36_4s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
+        else:
+            # d_in, d_out = ResNet43_8s(in_shape, 1)
+            self.model = ResNet43_8s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
 
-        in_img.shape: (320, 160, 6)
-        input_data.shape: (320, 320, 6), then (None, 320, 320, 6)
-        """
-        input_data = np.pad(in_img, self.padding, mode='constant')
-        input_data = self.preprocess(input_data)
-        input_shape = (1,) + input_data.shape
-        input_data = input_data.reshape(input_shape)
-        in_tens = tf.convert_to_tensor(input_data, dtype=tf.float32)
+        self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        
 
-        # Rotate input
-        pivot = np.array(input_data.shape[1:3]) / 2
-        rvecs = self.get_se2(self.num_rotations, pivot)
-        in_tens = tf.repeat(in_tens, repeats=self.num_rotations, axis=0)
-        # https://www.tensorflow.org/addons/api_docs/python/tfa/image/transform
-        in_tens = tfa.image.transform(in_tens, rvecs, interpolation='NEAREST')
 
-        # Forward pass
-        in_tens = tf.split(in_tens, self.num_rotations)
-        logits = ()
-        for x in in_tens:
-            logits += (self.model(x),)
-        logits = tf.concat(logits, axis=0)
+    def forward(self, in_img, softmax=True):
+        in_data = np.pad(in_img, self.padding, mode='constant')
+        in_data = self.preprocess(in_data)
+        in_shape = (1,) + in_data.shape
+        in_data = in_data.reshape(in_shape)
+        in_tens = torch.from_numpy(in_data).float()
 
-        # Rotate back output
-        rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
-        logits = tfa.image.transform(logits, rvecs, interpolation='NEAREST')
+        # Rotate input.
+        pivot = torch.tensor(in_data.shape[1:3]) / 2
+        rvecs = self.get_se2(self.n_rotations, pivot)
+        in_tens = in_tens.repeat(self.n_rotations, 1, 1, 1)
+        for i in range(self.n_rotations):
+            in_tens[i] = TF.rotate(in_tens[i], rvecs[i])
+
+        # Forward pass.
+        logits = []
+        for x in torch.split(in_tens, 1):
+            logits.append(self.model(x))
+        logits = torch.cat(logits, dim=0)
+
+        # Rotate back output.
+        rvecs = self.get_se2(self.n_rotations, pivot, reverse=True)
+        for i in range(self.n_rotations):
+            logits[i] = TF.rotate(logits[i], -rvecs[i]) # assuming rvecs are in degrees
         c0 = self.padding[:2, 0]
-        c1 = c0 + in_img.shape[:2]
+        c1 = c0 + torch.tensor(in_img.shape[:2])
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
-        logits = tf.transpose(logits, [3, 1, 2, 0])
-        output = tf.reshape(logits, (1, np.prod(logits.shape)))
-        if apply_softmax:
-            output = np.float32(output).reshape(logits.shape[1:])
+        logits = logits.permute(3, 1, 2, 0)
+        output = logits.view(1, -1)
+        if softmax:
+            output = F.softmax(output, dim=-1)
+            output = output.view(logits.shape[1:])
         return output
 
-    def train(self, in_img, p, theta):
+    def train(self, in_img, p, theta, backprop=True):
         self.metric.reset_states()
-        with tf.GradientTape() as tape:
-            output = self.forward(in_img, apply_softmax=False)
+        output = self.forward(in_img, softmax=False)
 
-            # Compute label
-            theta_i = theta / (2 * np.pi / self.num_rotations)
-            theta_i = np.int32(np.round(theta_i)) % self.num_rotations
-            label_size = in_img.shape[:2] + (self.num_rotations,)
-            label = np.zeros(label_size)
-            label[p[0], p[1], theta_i] = 1
-            label = label.reshape(1, np.prod(label.shape))
-            label = tf.convert_to_tensor(label, dtype=tf.float32)
+        # Get label.
+        theta_i = theta / (2 * np.pi / self.n_rotations)
+        theta_i = int(np.round(theta_i)) % self.n_rotations
+        label_size = in_img.shape[:2] + (self.n_rotations,)
+        label = np.zeros(label_size)
+        label[p[0], p[1], theta_i] = 1
+        label = label.reshape(1, -1)
+        label = torch.from_numpy(label).float()
 
-            # Compute loss
-            loss = tf.nn.softmax_cross_entropy_with_logits(label, output)
-            loss = tf.reduce_mean(loss)
+        # Get loss.
+        loss = F.cross_entropy(output, label)
+        loss = torch.mean(loss)
 
         # Backpropagate
-        grad = tape.gradient(loss, self.model.trainable_variables)
-        self.optim.apply_gradients(
-            zip(grad, self.model.trainable_variables))
-
-        self.metric(loss)
-        return np.float32(loss)
+        if backprop:
+            self.optim.zero_grad()
+            loss.backward()
+            self.optim.step()
+            # self.metric(loss)
 
     def load(self, path):
         self.model.load_weights(path)
