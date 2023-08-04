@@ -25,6 +25,7 @@ class Attention:
     """
 
     def __init__(self, input_shape, num_rotations, preprocess):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.num_rotations = num_rotations
         self.preprocess = preprocess
 
