@@ -93,7 +93,7 @@ class Attention:
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
         logits = logits.permute(3, 1, 2, 0)
-        output = logits.view(1, -1)
+        output = logits.reshape(1, -1)
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
