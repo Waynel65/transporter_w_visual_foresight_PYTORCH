@@ -11,6 +11,8 @@ from ravens.models import ResNet43_8s
 from ravens import utils
 
 import torch
+import torchvision.transforms.functional as TF
+
 
 
 class Attention:

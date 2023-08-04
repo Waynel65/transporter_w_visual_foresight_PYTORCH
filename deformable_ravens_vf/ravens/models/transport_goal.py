@@ -16,6 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
+import torchvision.transforms.functional as TF
 
 class TripleResnet(nn.Module):
     """
