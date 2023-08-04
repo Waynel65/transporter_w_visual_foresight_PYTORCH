@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 # from packaging import version
 # import tensorflow as tf
 import torch
+import torch.nn as nn
+
 
 # Check TensorFlow version
 # print("Detected TensorFlow version: ", tf.__version__)
