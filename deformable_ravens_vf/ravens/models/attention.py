@@ -45,13 +45,8 @@ class Attention:
         # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
         # self.metric = tf.keras.metrics.Mean(name='attention_loss')
 
-        if lite:
-            # d_in, d_out = ResNet36_4s(in_shape, 1)
-            self.model = ResNet36_4s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
-        else:
-            # d_in, d_out = ResNet43_8s(in_shape, 1)
-            self.model = ResNet43_8s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
-
+        # d_in, d_out = ResNet43_8s(in_shape, 1)
+        self.model = ResNet43_8s(in_shape[2], out_channel).to(self.device) # Wayne: instantiate the model here
         self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
         
 
