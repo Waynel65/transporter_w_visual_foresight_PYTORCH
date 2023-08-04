@@ -100,7 +100,7 @@ class ConvBlock(nn.Module):
 
 
 class ResNet43_8s(nn.Module):
-    def __init__(self, input_channels, output_dim, include_batchnorm=False, cutoff_early=False):
+    def __init__(self, input_channels, output_dim, include_batchnorm=False, prefix='', cutoff_early=False):
         super(ResNet43_8s, self).__init__()
 
         self.cutoff_early = cutoff_early

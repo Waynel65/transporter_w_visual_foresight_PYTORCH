@@ -22,6 +22,9 @@ class TransportGoal:
     """
 
     def __init__(self, input_shape, num_rotations, crop_size, preprocess):
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         self.num_rotations = num_rotations
         self.crop_size = crop_size  # crop size must be N*16 (e.g. 96)
         self.preprocess = preprocess
@@ -36,13 +39,19 @@ class TransportGoal:
         self.odim = output_dim = 3
 
         # 3 fully convolutional ResNets. Third one is for the goal.
-        in0, out0 = ResNet43_8s(input_shape, output_dim, prefix='s0_')
-        in1, out1 = ResNet43_8s(input_shape, output_dim, prefix='s1_')
-        in2, out2 = ResNet43_8s(input_shape, output_dim, prefix='s2_')
+        # in0, out0 = ResNet43_8s(input_shape, output_dim, prefix='s0_')
+        # in1, out1 = ResNet43_8s(input_shape, output_dim, prefix='s1_')
+        # in2, out2 = ResNet43_8s(input_shape, output_dim, prefix='s2_')
 
-        self.model = tf.keras.Model(inputs=[in0, in1, in2], outputs=[out0, out1, out2])
-        self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
-        self.metric = tf.keras.metrics.Mean(name='transport_loss')
+        self.resnet1 = ResNet43_8s(input_shape, output_dim).to(self.device)
+        self.resnet2 = ResNet43_8s(input_shape, output_dim).to(self.device)
+        self.resnet3 = ResNet43_8s(input_shape, output_dim).to(self.device)
+
+        # self.model = tf.keras.Model(inputs=[in0, in1, in2], outputs=[out0, out1, out2])
+        # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
+        # self.metric = tf.keras.metrics.Mean(name='transport_loss')
+
+        self.optimizer = optim.Adam(self.parameters(), lr=1e-4)
 
     def forward(self, in_img, goal_img, p, apply_softmax=True):
         """Forward pass of our goal-conditioned Transporter.
@@ -65,54 +74,56 @@ class TransportGoal:
         """
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
-        # input image --> TF tensor
+        # input image --> Torch tensor
         input_unproc = np.pad(in_img, self.padding, mode='constant')    # (384,224,6)
         input_data = self.preprocess(input_unproc.copy())               # (384,224,6)
         input_shape = (1,) + input_data.shape
         input_data = input_data.reshape(input_shape)                    # (1,384,224,6)
-        in_tensor = tf.convert_to_tensor(input_data, dtype=tf.float32)  # (1,384,224,6)
+        in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,384,224)
 
-        # goal image --> TF tensor
+        # goal image --> Torch tensor
         goal_unproc = np.pad(goal_img, self.padding, mode='constant')   # (384,224,6)
         goal_data = self.preprocess(goal_unproc.copy())                 # (384,224,6)
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,384,224,6)
-        goal_tensor = tf.convert_to_tensor(goal_data, dtype=tf.float32) # (1,384,224,6)
+        goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,384,224)
 
         # Get SE2 rotation vectors for cropping.
         pivot = np.array([p[1], p[0]]) + self.pad_size
         rvecs = self.get_se2(self.num_rotations, pivot)
 
         # Forward pass through three separate FCNs. All logits will be: (1,384,224,3).
+        # TODO: Add the necessary forward pass logic here, then uncomment the following lines
         in_logits, kernel_nocrop_logits, goal_logits = \
                     self.model([in_tensor, in_tensor, goal_tensor])
 
         # Use features from goal logits and combine with input and kernel.
-        goal_x_in_logits     = tf.multiply(goal_logits, in_logits)
-        goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
+        goal_x_in_logits     = goal_logits * in_logits
+        goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
         # Crop the kernel_logits about the picking point and get rotations.
-        crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
-        crop = tf.repeat(crop, repeats=self.num_rotations, axis=0)          # (24,384,224,3)
-        crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
+        crop = goal_x_kernel_logits.clone()                                 # (1,3,384,224)
+        crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224)
+        crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
         kernel = crop[:,
-                      p[0]:(p[0] + self.crop_size),
-                      p[1]:(p[1] + self.crop_size),
-                      :]
+                    p[0]:(p[0] + self.crop_size),
+                    p[1]:(p[1] + self.crop_size),
+                    :]
         assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
 
-        # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
-        kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
-        kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
-        kernel = tf.transpose(kernel, [1, 2, 3, 0])
-        output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
+        # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,3,64,64) --> (65,65,3,24).
+        kernel = F.pad(kernel, (0, 1, 0, 1))                             # pad the last two dimensions
+        kernel = kernel.permute(2, 3, 1, 0)                               # permute to match pytorch conv2d weight shape
+        output = F.conv2d(goal_x_in_logits, kernel)
         output = (1 / (self.crop_size**2)) * output
 
         if apply_softmax:
             output_shape = output.shape
-            output = tf.reshape(output, (1, np.prod(output.shape)))
-            output = tf.nn.softmax(output)
-            output = np.float32(output).reshape(output_shape[1:])
+            output = output.view(1, -1)
+            output = F.softmax(output, dim=1)
+            output = output.view(output_shape[1:]).numpy()
+
+        return output
 
         # Daniel: visualize crops and kernels, for Transporter-Goal figure.
         #self.visualize_images(p, in_img, input_data, crop)
@@ -123,7 +134,6 @@ class TransportGoal:
         #self.visualize_logits(goal_x_in_logits,     name='goal_x_in')
         #self.visualize_logits(goal_x_kernel_logits, name='goal_x_kernel')
 
-        return output
 
     def train(self, in_img, goal_img, p, q, theta):
         """Transport Goal training.
