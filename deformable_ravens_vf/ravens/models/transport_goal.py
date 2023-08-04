@@ -47,6 +47,9 @@ class TransportGoal:
         # in1, out1 = ResNet43_8s(input_shape, output_dim, prefix='s1_')
         # in2, out2 = ResNet43_8s(input_shape, output_dim, prefix='s2_')
 
+        print(f"input shape is {input_shape}")
+
+        # ! need to specify the channel size only
         self.resnet1 = ResNet43_8s(input_shape, output_dim).to(self.device)
         self.resnet2 = ResNet43_8s(input_shape, output_dim).to(self.device)
         self.resnet3 = ResNet43_8s(input_shape, output_dim).to(self.device)
