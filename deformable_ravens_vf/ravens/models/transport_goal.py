@@ -16,6 +16,31 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as T
 
+class TripleResnet(nn.Module):
+    """
+        This class will encapsulate the three resnets used
+        in the original TensorFlow version of TransportGoal
+        We have to manually define this because PyTorch doesn't
+        support one line encapulation of multiple models. 
+        We still need to define the init and forward function
+    """
+
+    def __init__(self, in_channel, output_dim):
+        super(TripleResnet, self).__init__()
+
+        self.resnet1 = ResNet43_8s(in_channel, output_dim)
+        self.resnet2 = ResNet43_8s(in_channel, output_dim)
+        self.resnet3 = ResNet43_8s(in_channel, output_dim)
+
+    def forward(self, in_tensor, goal_tensor):
+
+
+        in_logits = self.resnet1(in_tensor)
+        kernel_nocrop_logits = self.resnet2(in_tensor)
+        goal_logits = self.resnet3(goal_tensor)
+
+        return in_logits, kernel_nocrop_logits, goal_logits
+
 
 class TransportGoal:
     """Daniel: Transporter for the placing module, with goal images.
@@ -42,23 +67,24 @@ class TransportGoal:
         input_shape = tuple(input_shape)
         self.odim = output_dim = 3
 
+        print(f"input shape is {input_shape}")
+
+        self.model = TripleResnet(input_shape[2], output_dim)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+
         # 3 fully convolutional ResNets. Third one is for the goal.
         # in0, out0 = ResNet43_8s(input_shape, output_dim, prefix='s0_')
         # in1, out1 = ResNet43_8s(input_shape, output_dim, prefix='s1_')
         # in2, out2 = ResNet43_8s(input_shape, output_dim, prefix='s2_')
 
-        print(f"input shape is {input_shape}")
-
-        # ! need to specify the channel size only
-        self.resnet1 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
-        self.resnet2 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
-        self.resnet3 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
+        # self.resnet1 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
+        # self.resnet2 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
+        # self.resnet3 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
 
         # self.model = tf.keras.Model(inputs=[in0, in1, in2], outputs=[out0, out1, out2])
         # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
         # self.metric = tf.keras.metrics.Mean(name='transport_loss')
 
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
 
     def forward(self, in_img, goal_img, p, apply_softmax=True):
         """Forward pass of our goal-conditioned Transporter.
@@ -105,9 +131,11 @@ class TransportGoal:
         # TODO: Add the necessary forward pass logic here, then uncomment the following lines
         # in_logits, kernel_nocrop_logits, goal_logits = \
         #             self.model([in_tensor, in_tensor, goal_tensor])
-        in_logits = self.resnet1(in_tensor)
-        kernel_nocrop_logits = self.resnet2(in_tensor)
-        goal_logits = self.resnet3(goal_tensor)
+        # in_logits = self.resnet1(in_tensor)
+        # kernel_nocrop_logits = self.resnet2(in_tensor)
+        # goal_logits = self.resnet3(goal_tensor)
+
+        in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
 
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
