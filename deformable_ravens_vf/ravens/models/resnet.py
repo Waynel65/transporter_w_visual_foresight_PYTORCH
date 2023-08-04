@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 # import tensorflow as tf
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 # Check TensorFlow version
