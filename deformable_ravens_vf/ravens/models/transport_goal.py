@@ -58,7 +58,7 @@ class TransportGoal:
         # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
         # self.metric = tf.keras.metrics.Mean(name='transport_loss')
 
-        self.optimizer = optim.Adam(self.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
 
     def forward(self, in_img, goal_img, p, apply_softmax=True):
         """Forward pass of our goal-conditioned Transporter.
