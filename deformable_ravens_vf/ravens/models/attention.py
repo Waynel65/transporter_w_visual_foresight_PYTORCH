@@ -70,7 +70,7 @@ class Attention:
         for i in range(self.num_rotations):
             rvec = rvecs[i]
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-            in_tens[i] = TF.rotate(in_tens[i], rvec[i])
+            in_tens[i] = TF.rotate(in_tens[i], angle)
 
         # Forward pass.
         logits = []
