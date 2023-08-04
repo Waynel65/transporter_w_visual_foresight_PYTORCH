@@ -10,6 +10,8 @@ import tensorflow_addons as tfa
 from ravens.models import ResNet43_8s
 from ravens import utils
 
+import torch
+
 
 class Attention:
     """Daniel: attention model implemented as an hourglass FCN.
