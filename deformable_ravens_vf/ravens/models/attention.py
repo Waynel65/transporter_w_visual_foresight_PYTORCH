@@ -90,7 +90,7 @@ class Attention:
         return output
 
     def train(self, in_img, p, theta, backprop=True):
-        self.metric.reset_states()
+        # self.metric.reset_states()
         output = self.forward(in_img, softmax=False)
 
         # Get label.
