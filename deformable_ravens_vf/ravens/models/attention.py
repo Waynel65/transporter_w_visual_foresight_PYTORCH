@@ -73,6 +73,7 @@ class Attention:
             in_tens[i] = TF.rotate(in_tens[i], angle)
 
         # Forward pass.
+        in_tens = in_tens.to(self.device)
         logits = []
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
