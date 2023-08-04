@@ -112,6 +112,7 @@ class Attention:
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
         label = torch.from_numpy(label).float()
+        label = label.to(self.device)
 
         # Get loss.
         loss = F.cross_entropy(output, label)
