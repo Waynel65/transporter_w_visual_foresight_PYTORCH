@@ -106,7 +106,7 @@ class Attention:
         # Get label.
         theta_i = theta / (2 * np.pi / self.num_rotations)
         theta_i = int(np.round(theta_i)) % self.num_rotations
-        label_size = in_img.shape[:2] + (self.n_rotations,)
+        label_size = in_img.shape[:2] + (self.num_rotations,)
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
