@@ -63,9 +63,9 @@ class Attention:
 
         # Rotate input.
         pivot = torch.tensor(in_data.shape[1:3]) / 2
-        rvecs = self.get_se2(self.n_rotations, pivot)
-        in_tens = in_tens.repeat(self.n_rotations, 1, 1, 1)
-        for i in range(self.n_rotations):
+        rvecs = self.get_se2(self.num_rotations, pivot)
+        in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
+        for i in range(self.num_rotations):
             in_tens[i] = TF.rotate(in_tens[i], rvecs[i])
 
         # Forward pass.
@@ -75,8 +75,8 @@ class Attention:
         logits = torch.cat(logits, dim=0)
 
         # Rotate back output.
-        rvecs = self.get_se2(self.n_rotations, pivot, reverse=True)
-        for i in range(self.n_rotations):
+        rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
+        for i in range(self.num_rotations):
             logits[i] = TF.rotate(logits[i], -rvecs[i]) # assuming rvecs are in degrees
         c0 = self.padding[:2, 0]
         c1 = c0 + torch.tensor(in_img.shape[:2])
@@ -94,8 +94,8 @@ class Attention:
         output = self.forward(in_img, softmax=False)
 
         # Get label.
-        theta_i = theta / (2 * np.pi / self.n_rotations)
-        theta_i = int(np.round(theta_i)) % self.n_rotations
+        theta_i = theta / (2 * np.pi / self.num_rotations)
+        theta_i = int(np.round(theta_i)) % self.num_rotations
         label_size = in_img.shape[:2] + (self.n_rotations,)
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
