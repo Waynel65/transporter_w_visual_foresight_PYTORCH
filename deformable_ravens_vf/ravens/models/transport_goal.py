@@ -50,9 +50,9 @@ class TransportGoal:
         print(f"input shape is {input_shape}")
 
         # ! need to specify the channel size only
-        self.resnet1 = ResNet43_8s(input_shape, output_dim).to(self.device)
-        self.resnet2 = ResNet43_8s(input_shape, output_dim).to(self.device)
-        self.resnet3 = ResNet43_8s(input_shape, output_dim).to(self.device)
+        self.resnet1 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
+        self.resnet2 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
+        self.resnet3 = ResNet43_8s(input_shape[2], output_dim).to(self.device)
 
         # self.model = tf.keras.Model(inputs=[in0, in1, in2], outputs=[out0, out1, out2])
         # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
