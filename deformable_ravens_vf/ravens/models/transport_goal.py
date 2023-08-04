@@ -13,6 +13,7 @@ from ravens.models import ResNet43_8s
 from ravens import utils
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 
