@@ -79,7 +79,9 @@ class Attention:
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
         for i in range(self.num_rotations):
-            logits[i] = TF.rotate(logits[i], -rvecs[i]) # assuming rvecs are in degrees
+            rvec = rvecs[i]
+            angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+            logits[i] = TF.rotate(logits[i], angle) # assuming rvecs are in degrees
         c0 = self.padding[:2, 0]
         c1 = c0 + torch.tensor(in_img.shape[:2])
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]

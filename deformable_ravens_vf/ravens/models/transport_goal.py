@@ -127,7 +127,7 @@ class TransportGoal:
         pivot = np.array([p[1], p[0]]) + self.pad_size
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANSPORTER] RVECS have a shape of {rvecs.shape}")
-        print(rvecs)
+        # print(rvecs)
 
         # Forward pass through three separate FCNs. All logits will be: (1,384,224,3).
         # TODO: Add the necessary forward pass logic here, then uncomment the following lines
@@ -150,7 +150,9 @@ class TransportGoal:
         # ! need to decide how to translate this part
         # crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
         for i in range(self.num_rotations):
-            crop[i] = T.functional.rotate(crop[i], rvecs[i], interpolation=T.InterpolationMode.NEAREST)
+            rvec = rvecs[i]
+            angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+            crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
 
         kernel = crop[:,
                     p[0]:(p[0] + self.crop_size),
