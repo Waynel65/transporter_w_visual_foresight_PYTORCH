@@ -21,8 +21,9 @@ print("Detected PyTorch version: ", torch.__version__)
 
 
 class IdentityBlock(nn.Module):
-    def __init__(self, in_channels, filters, kernel_size, include_batchnorm=False):
+    def __init__(self, in_channels, filters, kernel_size, activation=True, include_batchnorm=False):
         super(IdentityBlock, self).__init__()
+        self.activation = activation
         filters1, filters2, filters3 = filters
 
         self.conv1 = nn.Conv2d(in_channels, filters1, kernel_size=1)
@@ -49,14 +50,16 @@ class IdentityBlock(nn.Module):
         out = self.bn3(out)
 
         out += identity
-        out = F.relu(out)
+        if self.activation:
+            out = F.relu(out)
 
         return out
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels, filters, kernel_size, stride=2, include_batchnorm=False):
+    def __init__(self, in_channels, filters, kernel_size, stride=2, activation=True, include_batchnorm=False):
         super(ConvBlock, self).__init__()
+        self.activation = activation
         filters1, filters2, filters3 = filters
 
         self.conv1 = nn.Conv2d(in_channels, filters1, kernel_size=1, stride=stride)
@@ -87,7 +90,8 @@ class ConvBlock(nn.Module):
         out = self.bn3(out)
 
         out += identity
-        out = F.relu(out)
+        if self.activation:
+            out = F.relu(out)
 
         return out
 
@@ -123,8 +127,8 @@ class ResNet43_8s(nn.Module):
         self.stage8a = ConvBlock(128, [64, 64, 64], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
         self.stage8b = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
 
-        self.stage9a = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, include_batchnorm=include_batchnorm, activation=False)
-        self.stage9b = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm, activation=False)
+        self.stage9a = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, activation=False, include_batchnorm=include_batchnorm)
+        self.stage9b = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, activation=False, include_batchnorm=include_batchnorm)
 
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
@@ -198,9 +202,9 @@ class ResNet36_4s(nn.Module):
 
             self.upsample_3 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-            self.conv_block5 = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+            self.conv_block5 = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, activation=False, include_batchnorm=include_batchnorm)
             # self.identity_block5 = IdentityBlock(64, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm)
-            self.identity_block5 = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm)
+            self.identity_block5 = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, activation=False, include_batchnorm=include_batchnorm)
             
     def forward(self, x):
         x = self.conv1(x)
