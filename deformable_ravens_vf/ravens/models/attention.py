@@ -111,7 +111,7 @@ class Attention:
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
-        label = torch.from_numpy(label).float()
+        label = torch.from_numpy(label).long()
         label = label.to(self.device)
 
         # Get loss.
