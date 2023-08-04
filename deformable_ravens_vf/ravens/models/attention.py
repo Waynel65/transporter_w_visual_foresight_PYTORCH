@@ -86,7 +86,9 @@ class Attention:
             rvec = rvecs[i]
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
             logits[i] = TF.rotate(logits[i], angle) # assuming rvecs are in degrees
-        c0 = self.padding[:2, 0]
+        c0 = torch.tensor(self.padding[:2, 0])
+
+
         c1 = c0 + torch.tensor(in_img.shape[:2])
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
