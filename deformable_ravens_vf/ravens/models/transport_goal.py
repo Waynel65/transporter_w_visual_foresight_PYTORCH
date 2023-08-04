@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 from ravens.models import ResNet43_8s
 from ravens import utils
 
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as T
+
 
 class TransportGoal:
     """Daniel: Transporter for the placing module, with goal images.
@@ -91,11 +95,16 @@ class TransportGoal:
         # Get SE2 rotation vectors for cropping.
         pivot = np.array([p[1], p[0]]) + self.pad_size
         rvecs = self.get_se2(self.num_rotations, pivot)
+        print(f"[TRANSPORTER] RVECS have a shape of {rvecs.shape}")
+        print(rvecs)
 
         # Forward pass through three separate FCNs. All logits will be: (1,384,224,3).
         # TODO: Add the necessary forward pass logic here, then uncomment the following lines
-        in_logits, kernel_nocrop_logits, goal_logits = \
-                    self.model([in_tensor, in_tensor, goal_tensor])
+        # in_logits, kernel_nocrop_logits, goal_logits = \
+        #             self.model([in_tensor, in_tensor, goal_tensor])
+        in_logits = self.resnet1(in_tensor)
+        kernel_nocrop_logits = self.resnet2(in_tensor)
+        goal_logits = self.resnet3(goal_tensor)
 
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
@@ -104,7 +113,12 @@ class TransportGoal:
         # Crop the kernel_logits about the picking point and get rotations.
         crop = goal_x_kernel_logits.clone()                                 # (1,3,384,224)
         crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224)
-        crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
+
+        # ! need to decide how to translate this part
+        # crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
+        for i in range(self.num_rotations):
+            crop[i] = T.functional.rotate(crop[i], rvecs[i], interpolation=T.InterpolationMode.NEAREST)
+
         kernel = crop[:,
                     p[0]:(p[0] + self.crop_size),
                     p[1]:(p[1] + self.crop_size),
@@ -143,30 +157,31 @@ class TransportGoal:
         discretizations, (c) make the label consider rotations in the last
         axis, but only provide the label to one single (pixel,rotation).
         """
-        self.metric.reset_states()
-        with tf.GradientTape() as tape:
-            output = self.forward(in_img, goal_img, p, apply_softmax=False)
+        # self.metric.reset_states()
+        output = self.forward(in_img, goal_img, p, apply_softmax=False)
 
-            # Compute label
-            itheta = theta / (2 * np.pi / self.num_rotations)
-            itheta = np.int32(np.round(itheta)) % self.num_rotations
-            label_size = in_img.shape[:2] + (self.num_rotations,)
-            label = np.zeros(label_size)
-            label[q[0], q[1], itheta] = 1
-            label = label.reshape(1, np.prod(label.shape))
-            label = tf.convert_to_tensor(label, dtype=tf.float32)
+        # Compute label
+        itheta = theta / (2 * np.pi / self.num_rotations)
+        itheta = int(np.round(itheta)) % self.num_rotations
+        label_size = in_img.shape[:2] + (self.num_rotations,)
+        label = np.zeros(label_size)
+        label[q[0], q[1], itheta] = 1
+        label = label.reshape(1, np.prod(label.shape))
+        label = torch.from_numpy(label).float().to(self.device)
 
-            # Compute loss after re-shaping the output.
-            output = tf.reshape(output, (1, np.prod(output.shape)))
-            loss = tf.nn.softmax_cross_entropy_with_logits(label, output)
-            loss = tf.reduce_mean(loss)
+        # Compute loss after re-shaping the output.
+        output = output.view(1, -1)
+        loss = F.cross_entropy(output, label)
+        loss = torch.mean(loss)
 
-        grad = tape.gradient(loss, self.model.trainable_variables)
-        self.optim.apply_gradients(zip(grad, self.model.trainable_variables))
+        # Backward pass and optimization
+        self.optim.zero_grad()
+        loss.backward()
+        self.optim.step()
 
-        self.metric(loss)
+        # self.metric.update(loss.item())
 
-        return np.float32(loss)
+        return loss.item()
 
     def get_se2(self, num_rotations, pivot):
         '''
