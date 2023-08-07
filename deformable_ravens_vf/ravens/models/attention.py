@@ -102,7 +102,7 @@ class Attention:
         logits = logits.permute(3, 1, 2, 0)
         output = logits.reshape(1, -1)
 
-        print(f"[ATTENTION] output has shape of {putput.shape}")
+        print(f"[ATTENTION] output has shape of {output.shape}")
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
