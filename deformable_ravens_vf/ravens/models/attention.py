@@ -81,6 +81,8 @@ class Attention:
             logits.append(self.model(x))
         logits = torch.cat(logits, dim=0)
 
+        print(f"[ATTENTION] logits has shape of {logits.shape}")
+
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
         for i in range(self.num_rotations):
@@ -89,12 +91,18 @@ class Attention:
             logits[i] = TF.rotate(logits[i], angle) # assuming rvecs are in degrees
         c0 = torch.tensor(self.padding[:2, 0])
 
+        print(f"[ATTENTION] c0 has shape of {c0.shape}")
+
 
         c1 = c0 + torch.tensor(in_img.shape[:2])
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
+        print(f"[ATTENTION] logits has shape of {logits.shape}")
+
         logits = logits.permute(3, 1, 2, 0)
         output = logits.reshape(1, -1)
+
+        print(f"[ATTENTION] output has shape of {putput.shape}")
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
@@ -113,8 +121,8 @@ class Attention:
         label = label.reshape(1, -1)
         label = torch.from_numpy(label).float()
         label = label.to(self.device)
-        print(f"[ATTENTION] Output has shape of {output.shape}")
-        print(f"[ATTENTION] Label has shape of {label.shape}")
+        print(f"[ATTENTION in train] Output has shape of {output.shape}")
+        print(f"[ATTENTION in train] Label has shape of {label.shape}")
 
         # Get loss.
         loss = F.cross_entropy(output, label)
