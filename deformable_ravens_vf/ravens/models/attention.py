@@ -62,7 +62,7 @@ class Attention:
         in_data = self.preprocess(in_data)
         in_shape = (1,) + in_data.shape
         in_data = in_data.reshape(in_shape)
-        in_tens = torch.from_numpy(in_data).float()
+        in_tens = torch.from_numpy(in_data).float().to(self.device)
 
         # Rotate input.
         pivot = torch.tensor(in_data.shape[1:3]) / 2
@@ -74,7 +74,6 @@ class Attention:
             in_tens[i] = TF.rotate(in_tens[i], angle)
 
         # Forward pass.
-        in_tens = in_tens.to(self.device)
         logits = []
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
@@ -110,6 +109,7 @@ class Attention:
 
     def train(self, in_img, p, theta, backprop=True):
         # self.metric.reset_states()
+        print(f"[ATTENTION in train] in_img has shape of {in_img.shape}")
         output = self.forward(in_img, softmax=False)
 
         # Get label.
