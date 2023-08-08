@@ -6,10 +6,10 @@ from absl import app
 from absl import flags
 import numpy as np
 # from ravens.dataset_pp_dynamics import DatasetPPDynamics
-from ravens.dynamics.pp_dynamics_trainer import PPDynamicsTrainer
+# from ravens.dynamics.pp_dynamics_trainer import PPDynamicsTrainer
 
-# from dataset_pp_dynamics import DatasetPPDynamics
-# from dynamics.pp_dynamics_trainer import PPDynamicsTrainer
+from dataset_pp_dynamics import DatasetPPDynamics
+from dynamics.pp_dynamics_trainer import PPDynamicsTrainer
 
 # import tensorflow as tf
 import torch
