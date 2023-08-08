@@ -179,7 +179,7 @@ class Attention:
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
-        label = torch.from_numpy(label).float()
+        label = torch.from_numpy(label).long()
         label = label.to(self.device)
         print(f"[ATTENTION in train] Output has shape of {output.shape}")
         print(f"[ATTENTION in train] Label has shape of {label.shape}")
