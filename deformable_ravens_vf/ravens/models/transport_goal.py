@@ -147,7 +147,6 @@ class TransportGoal:
         crop = goal_x_kernel_logits.clone()                                 # (1,3,384,224)
         crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224)
 
-        # ! need to decide how to translate this part
         # crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
@@ -158,6 +157,7 @@ class TransportGoal:
                     p[0]:(p[0] + self.crop_size),
                     p[1]:(p[1] + self.crop_size),
                     :]
+        print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
         assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
 
         # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,3,64,64) --> (65,65,3,24).

@@ -108,10 +108,10 @@ class Attention:
     #     return output
 
     def forward(self, in_img, softmax=True):
-        print(f"[DEBUG] Original in_img shape: {in_img.shape}")
+        # print(f"[DEBUG] Original in_img shape: {in_img.shape}")
 
         in_data = np.pad(in_img, self.padding, mode='constant')
-        print(f"[DEBUG] in_data shape after padding: {in_data.shape}")
+        # print(f"[DEBUG] in_data shape after padding: {in_data.shape}")
 
         in_data = self.preprocess(in_data)
         in_shape = (1,) + in_data.shape
@@ -120,11 +120,11 @@ class Attention:
 
         # Rotate input.
         pivot = torch.tensor(in_data.shape[1:3]) / 2
-        print(f"[DEBUG] pivot: {pivot}")
+        # print(f"[DEBUG] pivot: {pivot}")
 
         rvecs = self.get_se2(self.num_rotations, pivot)
         in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
-        print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
+        # print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
 
         rotated_tens = torch.empty_like(in_tens)
         for i in range(self.num_rotations):
@@ -134,17 +134,17 @@ class Attention:
         in_tens = rotated_tens
 
 
-        print(f"[DEBUG] in_tens shape after rotation: {in_tens.shape}")    
+        # print(f"[DEBUG] in_tens shape after rotation: {in_tens.shape}")    
 
         # Forward pass.
         logits = []
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
             out = self.model(x)
-            print(f"[DEBUG] out shape before concatenation: {out.shape}")
+            # print(f"[DEBUG] out shape before concatenation: {out.shape}")
             logits.append(out)
         logits = torch.cat(logits, dim=0)
-        print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
+        # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
 
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
@@ -157,16 +157,16 @@ class Attention:
 
 
         c0 = torch.tensor(self.padding[:2, 0])
-        print(f"[DEBUG] c0 shape after concatenation: {c0.shape}")
+        # print(f"[DEBUG] c0 shape after concatenation: {c0.shape}")
         c1 = c0 + torch.tensor(in_img.shape[:2])
-        print(f"[DEBUG] c1 shape after concatenation: {c1.shape}")
+        # print(f"[DEBUG] c1 shape after concatenation: {c1.shape}")
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
-        print(f"[DEBUG] logits shape after slicing: {logits.shape}")
+        # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
 
         logits = logits.permute(3, 1, 2, 0)
         output = logits.reshape(1, -1)
-        print(f"[DEBUG] Final output shape: {output.shape}")
+        # print(f"[DEBUG] Final output shape: {output.shape}")
 
         if softmax:
             output = F.softmax(output, dim=-1)
