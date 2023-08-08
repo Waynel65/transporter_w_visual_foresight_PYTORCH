@@ -179,14 +179,15 @@ class Attention:
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
-        label = torch.from_numpy(label).long()
+        label = torch.from_numpy(label).float()
         label = label.to(self.device)
         print(f"[ATTENTION in train] Output has shape of {output.shape}")
         print(f"[ATTENTION in train] Label has shape of {label.shape}")
 
         # Get loss.
-        loss = F.cross_entropy(output, label)
-        loss = torch.mean(loss)
+        loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
+        loss = loss_fn(output, label_tensor)
+        loss_mean = loss.mean()
 
         # Backpropagate
         if backprop:
