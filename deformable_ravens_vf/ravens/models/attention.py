@@ -186,7 +186,7 @@ class Attention:
 
         # Get loss.
         loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
-        loss = loss_fn(output, label_tensor)
+        loss = loss_fn(output, label)
         loss_mean = loss.mean()
 
         # Backpropagate
