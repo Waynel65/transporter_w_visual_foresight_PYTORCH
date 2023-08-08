@@ -153,7 +153,7 @@ class ResNet43_8s(nn.Module):
         x = self.stage5a(x)
         x = self.stage5b(x)
 
-        x = self.upsample(x)
+        # x = self.upsample(x)
 
         x = self.stage6a(x)
         x = self.stage6b(x)
