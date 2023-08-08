@@ -126,10 +126,13 @@ class Attention:
         in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
         print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
 
+        rotated_tens = torch.empty_like(in_tens)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-            in_tens[i] = TF.rotate(in_tens[i], angle)
+            rotated_tens[i] = TF.rotate(in_tens[i], angle)
+        in_tens = rotated_tens
+
 
         print(f"[DEBUG] in_tens shape after rotation: {in_tens.shape}")    
 
@@ -145,10 +148,14 @@ class Attention:
 
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
+        rotated_logits = torch.empty_like(logits)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-            logits[i] = TF.rotate(logits[i], angle)
+            rotated_logits[i] = TF.rotate(logits[i], angle)
+        logits = rotated_logits
+
+
         c0 = torch.tensor(self.padding[:2, 0])
         print(f"[DEBUG] c0 shape after concatenation: {c0.shape}")
         c1 = c0 + torch.tensor(in_img.shape[:2])
