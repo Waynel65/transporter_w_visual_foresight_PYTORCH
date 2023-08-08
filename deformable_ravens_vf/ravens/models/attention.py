@@ -131,12 +131,14 @@ class Attention:
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
             in_tens[i] = TF.rotate(in_tens[i], angle)
 
+        print(f"[DEBUG] in_tens shape after rotation: {in_tens.shape}")    
+
         # Forward pass.
         logits = []
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
             out = self.model(x)
-            print(f"[DEBUG] out shape after concatenation: {out.shape}")
+            print(f"[DEBUG] out shape before concatenation: {out.shape}")
             logits.append(out)
         logits = torch.cat(logits, dim=0)
         print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
