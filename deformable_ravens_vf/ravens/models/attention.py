@@ -135,7 +135,8 @@ class Attention:
         logits = []
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
-            logits.append(self.model(x))
+            out = self.model(x)
+            logits.append(out)
         logits = torch.cat(logits, dim=0)
         print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
 
@@ -146,7 +147,9 @@ class Attention:
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
             logits[i] = TF.rotate(logits[i], angle)
         c0 = torch.tensor(self.padding[:2, 0])
+        print(f"[DEBUG] c0 shape after concatenation: {c0.shape}")
         c1 = c0 + torch.tensor(in_img.shape[:2])
+        print(f"[DEBUG] c1 shape after concatenation: {c1.shape}")
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
         print(f"[DEBUG] logits shape after slicing: {logits.shape}")
