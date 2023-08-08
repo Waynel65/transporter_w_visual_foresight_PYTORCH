@@ -136,6 +136,7 @@ class Attention:
         for x in torch.split(in_tens, 1):
             x = x.permute(0, 3, 1, 2)
             out = self.model(x)
+            print(f"[DEBUG] out shape after concatenation: {out.shape}")
             logits.append(out)
         logits = torch.cat(logits, dim=0)
         print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
