@@ -122,6 +122,7 @@ if __name__ == '__main__':
             dataset.set(i, episodes_list[i])
 
         performance = []
+        torch.autograd.set_detect_anomaly(True)
         while agent.total_iter < num_train_iters:
             # Train agent.
             tf.keras.backend.set_learning_phase(1)
