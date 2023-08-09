@@ -161,7 +161,9 @@ class TransportGoal:
               p[1]:(p[1] + self.crop_size)]
 
         print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
-        assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
+        # assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
+        assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
+        # at this point we should have kernel shape == (36,3,64,64)
 
         # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,3,64,64) --> (65,65,3,24).
         kernel = F.pad(kernel, (0, 1, 0, 1))                             # pad the last two dimensions
