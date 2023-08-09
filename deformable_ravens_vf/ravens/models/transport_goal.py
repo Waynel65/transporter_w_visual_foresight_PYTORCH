@@ -213,6 +213,7 @@ class TransportGoal:
 
         # Compute loss after re-shaping the output.
         output = output.view(1, -1)
+        print(f"[trans_goal] output shape: {output.shape} | label shape: {label.shape}")
         loss = F.cross_entropy(output, label)
         loss = torch.mean(loss)
 
