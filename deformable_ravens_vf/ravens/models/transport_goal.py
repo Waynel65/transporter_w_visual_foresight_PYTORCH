@@ -209,7 +209,7 @@ class TransportGoal:
         label = np.zeros(label_size)
         label[q[0], q[1], itheta] = 1
         label = label.reshape(1, np.prod(label.shape))
-        label = torch.from_numpy(label).float().to(self.device)
+        label = torch.from_numpy(label).long().to(self.device)
 
         # Compute loss after re-shaping the output.
         output = output.view(1, -1)
