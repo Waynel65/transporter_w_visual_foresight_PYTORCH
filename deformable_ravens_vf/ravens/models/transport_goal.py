@@ -160,7 +160,7 @@ class TransportGoal:
               p[0]:(p[0] + self.crop_size),
               p[1]:(p[1] + self.crop_size)]
 
-        print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
+        # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
         # assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
         assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
@@ -209,13 +209,17 @@ class TransportGoal:
         label = np.zeros(label_size)
         label[q[0], q[1], itheta] = 1
         label = label.reshape(1, np.prod(label.shape))
-        label = torch.from_numpy(label).long().to(self.device)
+        label = torch.from_numpy(label).float().to(self.device)
 
         # Compute loss after re-shaping the output.
         output = output.view(1, -1)
         print(f"[trans_goal] output shape: {output.shape} | label shape: {label.shape}")
-        loss = F.cross_entropy(output, label)
-        loss = torch.mean(loss)
+        # loss = F.cross_entropy(output, label)
+        # loss = torch.mean(loss)
+
+        loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
+        loss = loss_fn(output, label)
+        loss_mean = loss.mean()
 
         # Backward pass and optimization
         self.optim.zero_grad()
