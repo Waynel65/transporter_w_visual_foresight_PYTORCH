@@ -167,8 +167,8 @@ class TransportGoal:
 
         # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,3,64,64) --> (65,65,3,24).
         kernel = F.pad(kernel, (0, 1, 0, 1))                             # pad the last two dimensions
-        kernel = kernel.permute(2, 3, 1, 0)                               # permute to match pytorch conv2d weight shape
-        output = F.conv2d(goal_x_in_logits, kernel)
+        kernel = kernel.permute(0, 2, 3, 1) # resulting in shape (36, 65, 65, 3)
+        output = F.conv2d(goal_x_in_logits, kernel, groups=3) # apply convolution with groups=3
         output = (1 / (self.crop_size**2)) * output
 
         if apply_softmax:
