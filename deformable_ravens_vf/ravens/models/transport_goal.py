@@ -200,6 +200,7 @@ class TransportGoal:
         """
         # self.metric.reset_states()
         output = self.forward(in_img, goal_img, p, apply_softmax=False)
+        output = output.to(self.device)
 
         # Compute label
         itheta = theta / (2 * np.pi / self.num_rotations)
