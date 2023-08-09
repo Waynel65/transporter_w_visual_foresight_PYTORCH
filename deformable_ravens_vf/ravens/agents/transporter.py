@@ -210,9 +210,9 @@ class TransporterAgent:
                 loss1 = self.transport_model.train(img_curr, img_goal, p0, p1, p1_theta)
             else:
                 loss1 = self.transport_model.train(input_image, p0, p1, p1_theta)
-            with writer.as_default():
-                tf.summary.scalar('transport_loss', self.transport_model.metric.result(),
-                    step=self.total_iter+i)
+            # with writer.as_default():
+            #     tf.summary.scalar('transport_loss', self.transport_model.metric.result(),
+            #         step=self.total_iter+i)
 
             print(f'Train Iter: {self.total_iter + i} Loss: {loss0:.4f} {loss1:.4f}')
 
