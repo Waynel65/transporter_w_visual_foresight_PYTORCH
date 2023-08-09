@@ -131,15 +131,6 @@ class TransportGoal:
         pivot = np.array([p[1], p[0]]) + self.pad_size
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
-        # print(rvecs)
-
-        # Forward pass through three separate FCNs. All logits will be: (1,384,224,3).
-        # TODO: Add the necessary forward pass logic here, then uncomment the following lines
-        # in_logits, kernel_nocrop_logits, goal_logits = \
-        #             self.model([in_tensor, in_tensor, goal_tensor])
-        # in_logits = self.resnet1(in_tensor)
-        # kernel_nocrop_logits = self.resnet2(in_tensor)
-        # goal_logits = self.resnet3(goal_tensor)
 
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
         print(f"[TRANS_goal] in_logits have a shape of {in_logits.shape}")
@@ -154,16 +145,21 @@ class TransportGoal:
         crop = goal_x_kernel_logits.clone()                                 # (1,3,384,224)
         crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224)
 
-        # crop = T.functional.affine(crop, angle=0, translate=(0, 0), scale=1, shear=0)    # (24,3,384,224)
+        rotated_crop = torch.empty_like(crop)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-            crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+            rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+        crop = rotated_crop
 
-        kernel = crop[:,
-                    p[0]:(p[0] + self.crop_size),
-                    p[1]:(p[1] + self.crop_size),
-                    :]
+        # kernel = crop[:,
+        #             p[0]:(p[0] + self.crop_size),
+        #             p[1]:(p[1] + self.crop_size),
+        #             :]
+        kernel = crop[:, :,
+              p[0]:(p[0] + self.crop_size),
+              p[1]:(p[1] + self.crop_size)]
+
         print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
         assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
 
