@@ -108,7 +108,7 @@ class TransportGoal:
         do another forward pass, which splits up the computation.
         """
 
-        print(f"[TRANS_goal] img.shape: {img.shape}")
+        print(f"[TRANS_goal] in_img.shape: {in_img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
         # input image --> Torch tensor
