@@ -165,12 +165,11 @@ class TransportGoal:
         assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
 
-        # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,3,64,64) --> (65,65,3,24).
-        kernel = F.pad(kernel, (0, 1, 0, 1))                             # pad the last two dimensions
-        kernel = kernel.permute(0, 2, 3, 1) # resulting in shape (36, 65, 65, 3)
-        print(f"[TRANS_goal] kernel have a shape of {kernel.shape}")
-        print(f"[TRANS_goal] goal_x_in_logits have a shape of {goal_x_in_logits.shape}")
-        output = F.conv2d(goal_x_in_logits, kernel, groups=3) # apply convolution with groups=3
+        kernel = F.pad(kernel, (0, 1, 0, 1))                            
+        # kernel = kernel.permute(0, 2, 3, 1) 
+        # print(f"[TRANS_goal] kernel have a shape of {kernel.shape}")
+        # print(f"[TRANS_goal] goal_x_in_logits have a shape of {goal_x_in_logits.shape}")
+        output = F.conv2d(goal_x_in_logits, kernel)
         output = (1 / (self.crop_size**2)) * output
 
         if apply_softmax:
