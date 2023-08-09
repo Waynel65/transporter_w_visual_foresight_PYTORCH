@@ -107,6 +107,8 @@ class TransportGoal:
         otherwise we have to do a forward pass, then call tf.multiply, then
         do another forward pass, which splits up the computation.
         """
+
+        print(f"[TRANS_goal] img.shape: {img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
         # input image --> Torch tensor
@@ -115,6 +117,7 @@ class TransportGoal:
         input_shape = (1,) + input_data.shape
         input_data = input_data.reshape(input_shape)                    # (1,384,224,6)
         in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,384,224)
+        print(f"[TRANS_goal] in_tensor.shape: {in_tensor.shape}")
 
         # goal image --> Torch tensor
         goal_unproc = np.pad(goal_img, self.padding, mode='constant')   # (384,224,6)
@@ -122,11 +125,12 @@ class TransportGoal:
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,384,224,6)
         goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,384,224)
+        print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
         pivot = np.array([p[1], p[0]]) + self.pad_size
         rvecs = self.get_se2(self.num_rotations, pivot)
-        print(f"[TRANSPORTER] RVECS have a shape of {rvecs.shape}")
+        print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
         # print(rvecs)
 
         # Forward pass through three separate FCNs. All logits will be: (1,384,224,3).
@@ -138,7 +142,10 @@ class TransportGoal:
         # goal_logits = self.resnet3(goal_tensor)
 
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
-
+        print(f"[TRANS_goal] in_logits have a shape of {in_logits.shape}")
+        print(f"[TRANS_goal] kernel_nocrop_logits have a shape of {kernel_nocrop_logits.shape}")
+        print(f"[TRANS_goal] goal_logits have a shape of {goal_logits.shape}")
+        
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
         goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
