@@ -186,15 +186,20 @@ class Attention:
         label = np.zeros(label_size)
         label[p[0], p[1], theta_i] = 1
         label = label.reshape(1, -1)
-        label = torch.from_numpy(label).float()
+        label = torch.from_numpy(label).long()
         label = label.to(self.device)
         print(f"[ATTENTION in train] Output has shape of {output.shape}")
         print(f"[ATTENTION in train] Label has shape of {label.shape}")
 
         # Get loss.
-        loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
-        loss = loss_fn(output, label)
-        loss_mean = loss.mean()
+        # loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
+        # loss = loss_fn(output, label)
+        # loss_mean = loss.mean()
+
+        label_indices = torch.argmax(label, dim=-1)  # Convert from one-hot to class indices
+        loss_fn = torch.nn.CrossEntropyLoss()
+        loss = loss_fn(output, label_indices)
+        loss = torch.mean(loss)
 
         # Backpropagate
         if backprop:
@@ -202,6 +207,8 @@ class Attention:
             loss.backward()
             self.optim.step()
             # self.metric(loss)
+        
+        return loss.item()
 
     def load(self, path):
         self.model.load_weights(path)

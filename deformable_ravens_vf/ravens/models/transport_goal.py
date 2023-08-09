@@ -217,10 +217,14 @@ class TransportGoal:
         # loss = F.cross_entropy(output, label)
         # loss = torch.mean(loss)
 
-        loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
-        loss = loss_fn(output, label)
-        loss_mean = loss.mean()
+        # loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
+        # loss = loss_fn(output, label)
+        # loss_mean = loss.mean()
 
+        label_indices = torch.argmax(label, dim=-1)  # Convert from one-hot to class indices
+        loss_fn = torch.nn.CrossEntropyLoss()
+        loss = loss_fn(output, label_indices)
+        loss = torch.mean(loss)
         # Backward pass and optimization
         self.optim.zero_grad()
         loss.backward()
