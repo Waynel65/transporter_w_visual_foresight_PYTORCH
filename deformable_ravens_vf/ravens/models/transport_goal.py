@@ -248,7 +248,7 @@ class TransportGoal:
 
     def save(self, fname):
         # self.model.save(fname)
-        torch.save(self.model.state_dict(), filename)
+        torch.save(self.model.state_dict(), fname)
 
     def load(self, fname):
         self.model.load_weights(fname)
