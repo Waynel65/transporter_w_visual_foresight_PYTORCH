@@ -247,7 +247,8 @@ class TransportGoal:
         return np.array(rvecs, dtype=np.float32)
 
     def save(self, fname):
-        self.model.save(fname)
+        # self.model.save(fname)
+        torch.save(self.model.state_dict(), filename)
 
     def load(self, fname):
         self.model.load_weights(fname)

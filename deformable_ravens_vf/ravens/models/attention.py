@@ -214,7 +214,8 @@ class Attention:
         self.model.load_weights(path)
 
     def save(self, filename):
-        self.model.save(filename)
+        # self.model.save(filename)
+        torch.save(self.model.state_dict(), filename)
 
     def get_se2(self, num_rotations, pivot, reverse=False):
         '''
