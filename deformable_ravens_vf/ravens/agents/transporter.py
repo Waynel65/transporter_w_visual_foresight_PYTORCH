@@ -213,7 +213,7 @@ class TransporterAgent:
             # with writer.as_default():
             #     tf.summary.scalar('transport_loss', self.transport_model.metric.result(),
             #         step=self.total_iter+i)
-            if self.total_iter + i == 10:
+            if self.total_iter + i == 5:
                 print("A model has been saved")
                 self.save()
             print(f'Train Iter: {self.total_iter + i} Loss: {loss0:.4f} {loss1:.4f}')
@@ -374,8 +374,12 @@ class TransporterAgent:
         """Save models."""
         if not os.path.exists(self.models_dir):
             os.makedirs(self.models_dir)
-        attention_fname = 'attention-ckpt-%d.h5' % self.total_iter
-        transport_fname = 'transport-ckpt-%d.h5' % self.total_iter
+        # attention_fname = 'attention-ckpt-%d.h5' % self.total_iter
+        # transport_fname = 'transport-ckpt-%d.h5' % self.total_iter
+
+        # should be using pytorch extension instead
+        attention_fname = 'attention-ckpt-%d.pth' % self.total_iter
+        transport_fname = 'transport-ckpt-%d.pth' % self.total_iter
         attention_fname = os.path.join(self.models_dir, attention_fname)
         transport_fname = os.path.join(self.models_dir, transport_fname)
         self.attention_model.save(attention_fname)
