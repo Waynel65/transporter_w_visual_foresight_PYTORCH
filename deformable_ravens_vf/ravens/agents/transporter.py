@@ -213,7 +213,8 @@ class TransporterAgent:
             # with writer.as_default():
             #     tf.summary.scalar('transport_loss', self.transport_model.metric.result(),
             #         step=self.total_iter+i)
-
+            if self.total_iter == 10:
+                self.save()
             print(f'Train Iter: {self.total_iter + i} Loss: {loss0:.4f} {loss1:.4f}')
 
         self.total_iter += num_iter
