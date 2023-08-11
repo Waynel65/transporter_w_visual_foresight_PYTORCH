@@ -160,7 +160,7 @@ class TransporterAgent:
             input_only = input_image[:, :, :maxdim]
             attention = self.attention_model.forward(input_only)
         else:
-            attention = self.attention_model.forward(input_image)
+            attention = self.attention_model.forward(input_image) # ! problematic
         argmax = np.argmax(attention)
         argmax = np.unravel_index(argmax, shape=attention.shape)
         p0_pixel = argmax[:2]
