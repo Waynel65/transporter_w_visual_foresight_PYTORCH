@@ -87,7 +87,7 @@ class PPDynamics(object):
 
     # Convert numpy arrays to PyTorch tensors
     # so that we can use torchvision's rotate
-    init_img = torch.from_numpy(init_img).to(self.device).float()
+    # init_img = torch.from_numpy(init_img).to(self.device).float()
     target_img = torch.from_numpy(target_img).to(self.device).float()
 
     # Forward pass.
@@ -126,9 +126,10 @@ class PPDynamics(object):
     # init_img should come in as a numpy matrix
     # Pick mask.
     # a mask that is positive around the center but zero elsewhere
-    init_img = init_img.permute(2,0,1)
+    init_img = torch.from_numpy(init_img).to(self.device).float()
     init_shape = init_img.shape
     print(f"the type of init_img is {type(init_img)} and the dimension is {init_shape}")
+    init_img = init_img.permute(2,0,1)
     pick_mask = torch.zeros(init_shape[1], init_shape[2])
     pick_mask[p0[0]:(p0[0]+self.mask_size), p0[1]:(p0[1]+self.mask_size)] = 1.0
     pick_mask = pick_mask.to(self.device)
@@ -217,6 +218,8 @@ class PPDynamics(object):
     # Forward pass.
     print(f"in_tens into model has shape of {in_tens.shape}")
     out_tens = self.model(in_tens)
+    print(f"out_tens into model has shape of {out_tens.shape}")
+
 
     return out_tens
 
