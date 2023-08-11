@@ -5,257 +5,234 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from packaging import version
-import tensorflow as tf
+# import tensorflow as tf
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 # Check TensorFlow version
-print("Detected TensorFlow version: ", tf.__version__)
-assert version.parse(tf.__version__).release[0] >= 2, 'This code requires TensorFlow 2.0 or above.'
+# print("Detected TensorFlow version: ", tf.__version__)
+print("Detected PyTorch version: ", torch.__version__)
+# assert version.parse(tf.__version__).release[0] >= 2, 'This code requires TensorFlow 2.0 or above.'
 
-# Set eager execution
-if not tf.executing_eagerly():
-    tf.compat.v1.enable_eager_execution()
-
-
-def identity_block(input_tensor, kernel_size, filters, stage, block, activation=True, include_batchnorm=False):
-    """The identity block is the block that has no conv layer at shortcut.
-
-    # Arguments
-        input_tensor: input tensor
-        kernel_size: default 3, the kernel size of
-            middle conv layer at main path
-        filters: list of integers, the filters of 3 conv layer at main path
-        stage: integer, current stage label, used for generating layer names
-        block: 'a','b'..., current block label, used for generating layer names
-
-    # Returns
-        Output tensor for the block.
-    """
-    filters1, filters2, filters3 = filters
-    batchnorm_axis = 3
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
-
-    x = tf.keras.layers.Conv2D(filters1, (1, 1),
-                               dilation_rate=(1, 1),
-                               kernel_initializer='glorot_uniform',
-                               name=conv_name_base + '2a')(input_tensor)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2a')(x)
-    x = tf.keras.layers.ReLU()(x)
-
-    x = tf.keras.layers.Conv2D(filters2, kernel_size,
-                               dilation_rate=(1, 1),
-                               padding='same',
-                               kernel_initializer='glorot_uniform',
-                               name=conv_name_base + '2b')(x)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2b')(x)
-    x = tf.keras.layers.ReLU()(x)
-
-    x = tf.keras.layers.Conv2D(filters3, (1, 1),
-                               dilation_rate=(1, 1),
-                               kernel_initializer='glorot_uniform',
-                               name=conv_name_base + '2c')(x)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2c')(x)
-
-    x = tf.keras.layers.add([x, input_tensor])
-
-    if activation:
-        x = tf.keras.layers.ReLU()(x)
-    return x
+# # Set eager execution
+# if not tf.executing_eagerly():
+#     tf.compat.v1.enable_eager_execution()
 
 
-def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2), activation=True, include_batchnorm=False):
-    """A block that has a conv layer at shortcut.
+class IdentityBlock(nn.Module):
+    def __init__(self, in_channels, filters, kernel_size, activation=True, include_batchnorm=False):
+        super(IdentityBlock, self).__init__()
+        self.activation = activation
+        filters1, filters2, filters3 = filters
 
-    # Arguments
-        input_tensor: input tensor
-        kernel_size: default 3, the kernel size of
-            middle conv layer at main path
-        filters: list of integers, the filters of 3 conv layer at main path
-        stage: integer, current stage label, used for generating layer names
-        block: 'a','b'..., current block label, used for generating layer names
-        strides: Strides for the first conv layer in the block.
+        self.conv1 = nn.Conv2d(in_channels, filters1, kernel_size=1)
+        self.bn1 = nn.BatchNorm2d(filters1) if include_batchnorm else nn.Identity()
 
-    # Returns
-        Output tensor for the block.
+        self.conv2 = nn.Conv2d(filters1, filters2, kernel_size=kernel_size, padding=kernel_size//2)
+        self.bn2 = nn.BatchNorm2d(filters2) if include_batchnorm else nn.Identity()
 
-    Note that from stage 3,
-    the first conv layer at main path is with strides=(2, 2)
-    And the shortcut should have strides=(2, 2) as well
-    """
-    filters1, filters2, filters3 = filters
-    batchnorm_axis = 3
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
+        self.conv3 = nn.Conv2d(filters2, filters3, kernel_size=1)
+        self.bn3 = nn.BatchNorm2d(filters3) if include_batchnorm else nn.Identity()
 
-    x = tf.keras.layers.Conv2D(filters1, (1, 1), strides=strides,
-                               dilation_rate=(1, 1),
-                               kernel_initializer='glorot_uniform',
-                               name=conv_name_base + '2a')(input_tensor)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2a')(x)
-    x = tf.keras.layers.ReLU()(x)
+    def forward(self, x):
+        identity = x
 
-    x = tf.keras.layers.Conv2D(filters2, kernel_size, padding='same',
-                               dilation_rate=(1, 1),
-                               kernel_initializer='glorot_uniform',
-                               name=conv_name_base + '2b')(x)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2b')(x)
-    x = tf.keras.layers.ReLU()(x)
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
 
-    x = tf.keras.layers.Conv2D(filters3, (1, 1),
-                               kernel_initializer='glorot_uniform',
-                               dilation_rate=(1, 1),
-                               name=conv_name_base + '2c')(x)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '2c')(x)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = F.relu(out)
 
-    shortcut = tf.keras.layers.Conv2D(filters3, (1, 1), strides=strides,
-                                      dilation_rate=(1, 1),
-                                      kernel_initializer='glorot_uniform',
-                                      name=conv_name_base + '1')(input_tensor)
-    if include_batchnorm:
-        shortcut = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=bn_name_base + '1')(shortcut)
+        out = self.conv3(out)
+        out = self.bn3(out)
 
-    x = tf.keras.layers.add([x, shortcut])
-    if activation:
-        x = tf.keras.layers.ReLU()(x)
-    return x
+        out += identity
+        if self.activation:
+            out = F.relu(out)
+
+        return out
 
 
-def ResNet43_8s(input_shape, output_dim, include_batchnorm=False, batchnorm_axis=3, prefix='', cutoff_early=False):
-    """Daniel: produces an hourglass FCN network, adapted to CoRL submission size.
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, filters, kernel_size, stride=2, activation=True, include_batchnorm=False):
+        super(ConvBlock, self).__init__()
+        self.activation = activation
+        filters1, filters2, filters3 = filters
 
-    Regarding shapes, look at: https://www.tensorflow.org/api_docs/python/tf/keras/Input [excludes batch size]
-    Here are the shape patterns, where I print shapes for the input, and after each conv_block or Conv2D call.
+        self.conv1 = nn.Conv2d(in_channels, filters1, kernel_size=1, stride=stride)
+        self.bn1 = nn.BatchNorm2d(filters1) if include_batchnorm else nn.Identity()
 
-    Attention:
-    (None, 320, 320, 6) (input shape)
-    (None, 320, 320, 64)
-    (None, 320, 320, 64)
-    (None, 160, 160, 128)
-    (None, 80, 80, 256)
-    (None, 40, 40, 512)
-    (None, 40, 40, 256)
-    (None, 80, 80, 128)
-    (None, 160, 160, 64)
-    (None, 320, 320, 1)
+        self.conv2 = nn.Conv2d(filters1, filters2, kernel_size=kernel_size, padding=kernel_size//2)
+        self.bn2 = nn.BatchNorm2d(filters2) if include_batchnorm else nn.Identity()
 
-    Transport, key module
-    (None, 384, 224, 6) (input shape)
-    (None, 384, 224, 64)
-    (None, 384, 224, 64)
-    (None, 192, 112, 128)
-    (None, 96, 56, 256)
-    (None, 48, 28, 512)
-    (None, 48, 28, 256)
-    (None, 96, 56, 128)
-    (None, 192, 112, 64)
-    (None, 384, 224, 3)
+        self.conv3 = nn.Conv2d(filters2, filters3, kernel_size=1)
+        self.bn3 = nn.BatchNorm2d(filters3) if include_batchnorm else nn.Identity()
 
-    Transport, query module, assumes cropping beforehand.
-    (None, 64, 64, 6) (input shape)
-    (None, 64, 64, 64)
-    (None, 64, 64, 64)
-    (None, 32, 32, 128)
-    (None, 16, 16, 256)
-    (None, 8, 8, 512)
-    (None, 8, 8, 256)
-    (None, 16, 16, 128)
-    (None, 32, 32, 64)
-    (None, 64, 64, 3)
+        self.shortcut = nn.Conv2d(in_channels, filters3, kernel_size=1, stride=stride)
+        self.bn_shortcut = nn.BatchNorm2d(filters3) if include_batchnorm else nn.Identity()
 
-    Here I ignore output after identity blocks, which produce tensors of the same size.
+    def forward(self, x):
+        identity = self.shortcut(x)
+        identity = self.bn_shortcut(identity)
 
-    Parameters
-    ----------
-    :input_shape: a tuple that specifies the shape for tf.keras.layers.Input. By default,
-        it's (None,320,320,6) for Attention, (None,384,224,6) for Transport. The input is
-        a tuple, not a tensor.
-    :output_dim: a single scalar, which produces the number of channels of the output.
-        For example, if it's set to 3, then if we pass kernels of size (None,64,64,6),
-        the default, we get an output tensor of size (None,64,64,3).
-    """
-    input_data = tf.keras.layers.Input(shape=input_shape)
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
 
-    x = tf.keras.layers.Conv2D(64, (3, 3), strides=(1, 1), padding='same', kernel_initializer='glorot_uniform', name=prefix + 'conv1')(input_data)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=prefix + 'bn_conv1')(x)
-    x = tf.keras.layers.ReLU()(x)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = F.relu(out)
 
-    if cutoff_early:
-        x = conv_block(x, 5, [64, 64, output_dim], stage=2, block=prefix + 'a', strides=(1, 1), include_batchnorm=include_batchnorm)
-        x = identity_block(x, 5, [64, 64, output_dim], stage=2, block=prefix + 'b', include_batchnorm=include_batchnorm)
-        return input_data, x
+        out = self.conv3(out)
+        out = self.bn3(out)
 
-    x = conv_block(x, 3, [64, 64, 64], stage=2, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [64, 64, 64], stage=2, block=prefix + 'b')
+        out += identity
+        if self.activation:
+            out = F.relu(out)
 
-    x = conv_block(x, 3, [128, 128, 128], stage=3, block=prefix + 'a', strides=(2, 2))
-    x = identity_block(x, 3, [128, 128, 128], stage=3, block=prefix + 'b')
-
-    x = conv_block(x, 3, [256, 256, 256], stage=4, block=prefix + 'a', strides=(2, 2))
-    x = identity_block(x, 3, [256, 256, 256], stage=4, block=prefix + 'b')
-
-    x = conv_block(x, 3, [512, 512, 512], stage=5, block=prefix + 'a', strides=(2, 2))
-    x = identity_block(x, 3, [512, 512, 512], stage=5, block=prefix + 'b')
-
-    x = conv_block(x, 3, [256, 256, 256], stage=6, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [256, 256, 256], stage=6, block=prefix + 'b')
-
-    x = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear', name=prefix + 'upsample_1')(x)
-
-    x = conv_block(x, 3, [128, 128, 128], stage=7, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [128, 128, 128], stage=7, block=prefix + 'b')
-
-    x = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear', name=prefix + 'upsample_2')(x)
-
-    x = conv_block(x, 3, [64, 64, 64], stage=8, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [64, 64, 64], stage=8, block=prefix + 'b')
-
-    x = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear', name=prefix + 'upsample_3')(x)
-
-    x = conv_block(x, 3, [16, 16, output_dim], stage=9, block=prefix + 'a', strides=(1, 1), activation=False)
-    output = identity_block(x, 3, [16, 16, output_dim], stage=9, block=prefix + 'b', activation=False)
-
-    return input_data, output
+        return out
 
 
-def ResNet36_4s(input_shape, output_dim, include_batchnorm=False, batchnorm_axis=3, prefix='', cutoff_early=False):
-    # TODO: rename to ResNet36_4s
 
-    input_data = tf.keras.layers.Input(shape=input_shape)
+class ResNet43_8s(nn.Module):
+    def __init__(self, input_channels, output_dim, include_batchnorm=False, cutoff_early=False):
+        super(ResNet43_8s, self).__init__()
 
-    x = tf.keras.layers.Conv2D(64, (3, 3), strides=(1, 1), padding='same', kernel_initializer='glorot_uniform', name=prefix + 'conv1')(input_data)
-    if include_batchnorm:
-        x = tf.keras.layers.BatchNormalization(axis=batchnorm_axis, name=prefix + 'bn_conv1')(x)
-    x = tf.keras.layers.ReLU()(x)
+        self.cutoff_early = cutoff_early
 
-    if cutoff_early:
-        x = conv_block(x, 5, [64, 64, output_dim], stage=2, block=prefix + 'a', strides=(1, 1), include_batchnorm=include_batchnorm)
-        x = identity_block(x, 5, [64, 64, output_dim], stage=2, block=prefix + 'b', include_batchnorm=include_batchnorm)
-        return input_data, x
+        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(64) if include_batchnorm else nn.Identity()
 
-    x = conv_block(x, 3, [64, 64, 64], stage=2, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [64, 64, 64], stage=2, block=prefix + 'b')
+        self.stage2a = ConvBlock(64, [64, 64, 64], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+        self.stage2b = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = conv_block(x, 3, [64, 64, 64], stage=3, block=prefix + 'a', strides=(2, 2))
-    x = identity_block(x, 3, [64, 64, 64], stage=3, block=prefix + 'b')
+        self.stage3a = ConvBlock(64, [128, 128, 128], kernel_size=3, stride=2, include_batchnorm=include_batchnorm)
+        self.stage3b = IdentityBlock(128, [128, 128, 128], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = conv_block(x, 3, [64, 64, 64], stage=4, block=prefix + 'a', strides=(2, 2))
-    x = identity_block(x, 3, [64, 64, 64], stage=4, block=prefix + 'b')
+        self.stage4a = ConvBlock(128, [256, 256, 256], kernel_size=3, stride=2, include_batchnorm=include_batchnorm)
+        self.stage4b = IdentityBlock(256, [256, 256, 256], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear', name=prefix + 'upsample_2')(x)
+        self.stage5a = ConvBlock(256, [512, 512, 512], kernel_size=3, stride=2, include_batchnorm=include_batchnorm)
+        self.stage5b = IdentityBlock(512, [512, 512, 512], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = conv_block(x, 3, [64, 64, 64], stage=8, block=prefix + 'a', strides=(1, 1))
-    x = identity_block(x, 3, [64, 64, 64], stage=8, block=prefix + 'b')
+        self.stage6a = ConvBlock(512, [256, 256, 256], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+        self.stage6b = IdentityBlock(256, [256, 256, 256], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = tf.keras.layers.UpSampling2D(size=(2, 2), interpolation='bilinear', name=prefix + 'upsample_3')(x)
+        self.stage7a = ConvBlock(256, [128, 128, 128], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+        self.stage7b = IdentityBlock(128, [128, 128, 128], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    x = conv_block(x, 3, [16, 16, output_dim], stage=9, block=prefix + 'a', strides=(1, 1), activation=False)
-    output = identity_block(x, 3, [16, 16, output_dim], stage=9, block=prefix + 'b', activation=False)
+        self.stage8a = ConvBlock(128, [64, 64, 64], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+        self.stage8b = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
 
-    return input_data, output
+        self.stage9a = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, activation=False, include_batchnorm=include_batchnorm)
+        self.stage9b = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, activation=False, include_batchnorm=include_batchnorm)
+
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = F.relu(x)
+
+        x = self.stage2a(x)
+        x = self.stage2b(x)
+
+        if self.cutoff_early:
+            return x
+
+        x = self.stage3a(x)
+        x = self.stage3b(x)
+
+        x = self.stage4a(x)
+        x = self.stage4b(x)
+
+        x = self.stage5a(x)
+        x = self.stage5b(x)
+
+        # x = self.upsample(x)
+
+        x = self.stage6a(x)
+        x = self.stage6b(x)
+
+        x = self.upsample(x)
+
+        x = self.stage7a(x)
+        x = self.stage7b(x)
+
+        x = self.upsample(x)
+
+        x = self.stage8a(x)
+        x = self.stage8b(x)
+
+        x = self.upsample(x)
+
+        x = self.stage9a(x)
+        x = self.stage9b(x)
+
+        return x
+
+
+
+class ResNet36_4s(nn.Module):
+    def __init__(self, input_channels, output_dim, include_batchnorm=False, cutoff_early=False):
+        super(ResNet36_4s, self).__init__()
+
+        self.cutoff_early = cutoff_early
+
+        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(64) if include_batchnorm else nn.Identity()
+
+        self.conv_block1 = ConvBlock(64, [64, 64, output_dim if cutoff_early else 64], kernel_size=5 if cutoff_early else 3, stride=1, include_batchnorm=include_batchnorm)
+        self.identity_block1 = IdentityBlock(64, [64, 64, output_dim if cutoff_early else 64], kernel_size=5 if cutoff_early else 3, include_batchnorm=include_batchnorm)
+
+        if not cutoff_early:
+            self.conv_block2 = ConvBlock(64, [64, 64, 64], kernel_size=3, stride=2, include_batchnorm=include_batchnorm)
+            self.identity_block2 = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
+
+            self.conv_block3 = ConvBlock(64, [64, 64, 64], kernel_size=3, stride=2, include_batchnorm=include_batchnorm)
+            self.identity_block3 = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
+
+            self.upsample_2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+
+            self.conv_block4 = ConvBlock(64, [64, 64, 64], kernel_size=3, stride=1, include_batchnorm=include_batchnorm)
+            self.identity_block4 = IdentityBlock(64, [64, 64, 64], kernel_size=3, include_batchnorm=include_batchnorm)
+
+            self.upsample_3 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+
+            self.conv_block5 = ConvBlock(64, [16, 16, output_dim], kernel_size=3, stride=1, activation=False, include_batchnorm=include_batchnorm)
+            # self.identity_block5 = IdentityBlock(64, [16, 16, output_dim], kernel_size=3, include_batchnorm=include_batchnorm)
+            self.identity_block5 = IdentityBlock(output_dim, [16, 16, output_dim], kernel_size=3, activation=False, include_batchnorm=include_batchnorm)
+            
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = F.relu(x)
+
+        x = self.conv_block1(x)
+        x = self.identity_block1(x)
+
+        if self.cutoff_early:
+            return x
+
+        x = self.conv_block2(x)
+        x = self.identity_block2(x)
+
+        x = self.conv_block3(x)
+        x = self.identity_block3(x)
+
+        x = self.upsample_2(x)
+
+        x = self.conv_block4(x)
+        x = self.identity_block4(x)
+
+        x = self.upsample_3(x)
+
+        x = self.conv_block5(x)
+        x = self.identity_block5(x)
+
+        return x

@@ -4,11 +4,15 @@ import os
 import sys
 import cv2
 import numpy as np
-import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow as tf
+# import tensorflow_addons as tfa
 
 from ravens.models_gctn.resnet import ResNet43_8s
 from ravens.utils_gctn import utils
+
+import torch
+import torchvision.transforms.functional as TF
+import torch.nn.functional as F
 
 
 class Attention:
@@ -25,6 +29,7 @@ class Attention:
     """
 
     def __init__(self, input_shape, num_rotations, preprocess):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.num_rotations = num_rotations
         self.preprocess = preprocess
 
@@ -40,81 +45,127 @@ class Attention:
 
         # Initialize fully convolutional Residual Network with 43 layers and
         # 8-stride (3 2x2 max pools and 3 2x bilinear upsampling)
-        d_in, d_out = ResNet43_8s(input_shape, 1)
-        self.model = tf.keras.models.Model(inputs=[d_in], outputs=[d_out])
-        self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
-        self.metric = tf.keras.metrics.Mean(name='attention_loss')
+        # d_in, d_out = ResNet43_8s(input_shape, 1)
+        # self.model = tf.keras.models.Model(inputs=[d_in], outputs=[d_out])
+        # self.optim = tf.keras.optimizers.Adam(learning_rate=1e-4)
+        # self.metric = tf.keras.metrics.Mean(name='attention_loss')
 
-    def forward(self, in_img, apply_softmax=True):
-        """Forward pass.
+        # d_in, d_out = ResNet43_8s(in_shape, 1)
+        self.model = ResNet43_8s(input_shape[2], 1).to(self.device) # Wayne: instantiate the model here
+        self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        
 
-        in_img.shape: (320, 160, 6)
-        input_data.shape: (320, 320, 6), then (None, 320, 320, 6)
-        """
-        input_data = np.pad(in_img, self.padding, mode='constant')
-        input_data = self.preprocess(input_data)
-        input_shape = (1,) + input_data.shape
-        input_data = input_data.reshape(input_shape)
-        in_tens = tf.convert_to_tensor(input_data, dtype=tf.float32)
+    def forward(self, in_img, softmax=True):
+        # print(f"[DEBUG] Original in_img shape: {in_img.shape}")
 
-        # Rotate input
-        pivot = np.array(input_data.shape[1:3]) / 2
+        in_data = np.pad(in_img, self.padding, mode='constant')
+        # print(f"[DEBUG] in_data shape after padding: {in_data.shape}")
+
+        in_data = self.preprocess(in_data)
+        in_shape = (1,) + in_data.shape
+        in_data = in_data.reshape(in_shape)
+        in_tens = torch.from_numpy(in_data).float().to(self.device)
+
+        # Rotate input.
+        pivot = torch.tensor(in_data.shape[1:3]) / 2
+        # print(f"[DEBUG] pivot: {pivot}")
+
         rvecs = self.get_se2(self.num_rotations, pivot)
-        in_tens = tf.repeat(in_tens, repeats=self.num_rotations, axis=0)
-        # https://www.tensorflow.org/addons/api_docs/python/tfa/image/transform
-        in_tens = tfa.image.transform(in_tens, rvecs, interpolation='NEAREST')
+        in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
+        # print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
 
-        # Forward pass
-        in_tens = tf.split(in_tens, self.num_rotations)
-        logits = ()
-        for x in in_tens:
-            logits += (self.model(x),)
-        logits = tf.concat(logits, axis=0)
+        rotated_tens = torch.empty_like(in_tens)
+        for i in range(self.num_rotations):
+            rvec = rvecs[i]
+            angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+            rotated_tens[i] = TF.rotate(in_tens[i], angle)
+        in_tens = rotated_tens
 
-        # Rotate back output
+
+        # print(f"[DEBUG] in_tens shape after rotation: {in_tens.shape}")    
+
+        # Forward pass.
+        logits = []
+        for x in torch.split(in_tens, 1):
+            x = x.permute(0, 3, 1, 2)
+            out = self.model(x)
+            # print(f"[DEBUG] out shape before concatenation: {out.shape}")
+            logits.append(out)
+        logits = torch.cat(logits, dim=0)
+        # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
+
+        # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
-        logits = tfa.image.transform(logits, rvecs, interpolation='NEAREST')
-        c0 = self.padding[:2, 0]
-        c1 = c0 + in_img.shape[:2]
+        rotated_logits = torch.empty_like(logits)
+        for i in range(self.num_rotations):
+            rvec = rvecs[i]
+            angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+            rotated_logits[i] = TF.rotate(logits[i], angle)
+        logits = rotated_logits
+
+
+        c0 = torch.tensor(self.padding[:2, 0])
+        # print(f"[DEBUG] c0 shape after concatenation: {c0.shape}")
+        c1 = c0 + torch.tensor(in_img.shape[:2])
+        # print(f"[DEBUG] c1 shape after concatenation: {c1.shape}")
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
-        logits = tf.transpose(logits, [3, 1, 2, 0])
-        output = tf.reshape(logits, (1, np.prod(logits.shape)))
-        if apply_softmax:
-            output = np.float32(output).reshape(logits.shape[1:])
+        # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
+
+        logits = logits.permute(3, 1, 2, 0)
+        output = logits.reshape(1, -1)
+        # print(f"[DEBUG] Final output shape: {output.shape}")
+
+        if softmax:
+            output = F.softmax(output, dim=-1)
+            output = output.view(logits.shape[1:])
         return output
 
-    def train(self, in_img, p, theta):
-        self.metric.reset_states()
-        with tf.GradientTape() as tape:
-            output = self.forward(in_img, apply_softmax=False)
 
-            # Compute label
-            theta_i = theta / (2 * np.pi / self.num_rotations)
-            theta_i = np.int32(np.round(theta_i)) % self.num_rotations
-            label_size = in_img.shape[:2] + (self.num_rotations,)
-            label = np.zeros(label_size)
-            label[p[0], p[1], theta_i] = 1
-            label = label.reshape(1, np.prod(label.shape))
-            label = tf.convert_to_tensor(label, dtype=tf.float32)
+    def train(self, in_img, p, theta, backprop=True):
+        # self.metric.reset_states()
+        print(f"[ATTENTION in train] in_img has shape of {in_img.shape}")
+        output = self.forward(in_img, softmax=False)
 
-            # Compute loss
-            loss = tf.nn.softmax_cross_entropy_with_logits(label, output)
-            loss = tf.reduce_mean(loss)
+        # Get label.
+        theta_i = theta / (2 * np.pi / self.num_rotations)
+        theta_i = int(np.round(theta_i)) % self.num_rotations
+        label_size = in_img.shape[:2] + (self.num_rotations,)
+        label = np.zeros(label_size)
+        label[p[0], p[1], theta_i] = 1
+        label = label.reshape(1, -1)
+        label = torch.from_numpy(label).long()
+        label = label.to(self.device)
+        print(f"[ATTENTION in train] Output has shape of {output.shape}")
+        print(f"[ATTENTION in train] Label has shape of {label.shape}")
+
+        # Get loss.
+        # loss_fn = torch.nn.BCEWithLogitsLoss()  # Cross-entropy loss with logits
+        # loss = loss_fn(output, label)
+        # loss_mean = loss.mean()
+
+        label_indices = torch.argmax(label, dim=-1)  # Convert from one-hot to class indices
+        loss_fn = torch.nn.CrossEntropyLoss()
+        loss = loss_fn(output, label_indices)
+        loss = torch.mean(loss)
 
         # Backpropagate
-        grad = tape.gradient(loss, self.model.trainable_variables)
-        self.optim.apply_gradients(
-            zip(grad, self.model.trainable_variables))
-
-        self.metric(loss)
-        return np.float32(loss)
+        if backprop:
+            self.optim.zero_grad()
+            loss.backward()
+            self.optim.step()
+            # self.metric(loss)
+        
+        return loss.item()
 
     def load(self, path):
-        self.model.load_weights(path)
+        # self.model.load_weights(path)
+        # raise NotImplementedError("need to write load for attention")
+        self.model.load_state_dict(torch.load(path))
 
     def save(self, filename):
-        self.model.save(filename)
+        # self.model.save(filename)
+        torch.save(self.model.state_dict(), filename)
 
     def get_se2(self, num_rotations, pivot, reverse=False):
         '''
