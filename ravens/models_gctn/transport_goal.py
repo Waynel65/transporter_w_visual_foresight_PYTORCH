@@ -175,6 +175,7 @@ class TransportGoal:
 
         if apply_softmax:
             output_shape = output.shape
+            print(f"[DEBUG in trans_goal] final output shape before slicing: {output_shape}")
             output = output.view(1, -1)
             output = F.softmax(output, dim=1)
             output = output.permute(0,2,3,1)
