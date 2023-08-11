@@ -408,6 +408,7 @@ class PPDynamicsTrainer:
     p1 = utils.xyz_to_pix(p1_xyz, self.bounds, self.pix_size)
     p0_theta = -np.float32(utils.quatXYZW_to_eulerXYZ(p0_xyzw)[2])
     p1_theta = -np.float32(utils.quatXYZW_to_eulerXYZ(p1_xyzw)[2])
+    print(f'[DEBUG in imagine_img] p0_theta = {p0_theta} | p1_theta = {p1_theta} ')
     assert p0_theta == 0.0
     p1_theta = p1_theta - p0_theta
 
