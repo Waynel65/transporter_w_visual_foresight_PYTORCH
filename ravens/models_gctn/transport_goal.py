@@ -178,6 +178,7 @@ class TransportGoal:
             output = output.view(1, -1)
             output = F.softmax(output, dim=1)
             output = output.view(output_shape[1:]).detach().numpy()
+        print(f"[DEBUG in trans_goal] final output shape: {output.shape}")
 
         return output
 

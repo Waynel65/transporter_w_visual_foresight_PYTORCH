@@ -248,6 +248,9 @@ class BestFirstSearch:
     acts_2 = []
     next_imgs_2 = []
     next_imgs_means_2 = []
+
+    # ! this loop is causing problem
+    # ! specifically the second line
     for i in range(self.k):
       img = self.make_rgbhhh(next_imgs_means_1[i])
       acts_2_primitive, next_imgs_2_primitive, next_imgs_means_2_primitive = self.expand_img(img, visualize)

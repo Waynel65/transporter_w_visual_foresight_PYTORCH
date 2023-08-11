@@ -114,11 +114,11 @@ class Attention:
 
         logits = logits.permute(0, 2, 3, 1)
         output = logits.reshape(1, -1)
-        print(f"[DEBUG] Final output shape: {output.shape}")
         print(f"[DEBUG] Final logits shape: {logits.shape}")
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
+        print(f"[DEBUG] Final output shape: {output.shape}")
         return output
 
 
