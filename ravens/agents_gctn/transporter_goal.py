@@ -162,6 +162,9 @@ class TransporterAgent:
         else:
             attention = self.attention_model.forward(input_image)
         attention = attention.detach().cpu().numpy()
+        # prob need to convert back to original tensorflow based dimension
+        # otherwise this will not work
+        print(f"[DEBUG] attention's shape in eval: {attention.shape}")
         argmax = np.argmax(attention)
         argmax = np.unravel_index(argmax, shape=attention.shape)
         p0_pixel = argmax[:2]
