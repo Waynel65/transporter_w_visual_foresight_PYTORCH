@@ -150,7 +150,7 @@ class TransporterAgent:
         """
         colormap = input_image[:, :, :3]
         heightmap = input_image[:, :, 3]
-
+        print(f"[GET TOP K] input_image: {input_image.shape} | goal_image: {goal_image.shape}")
         input_image = np.concatenate((input_image, goal_image), axis=2)
         assert input_image.shape[2] == 12, input_image.shape
 
