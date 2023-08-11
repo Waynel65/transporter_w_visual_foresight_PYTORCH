@@ -255,6 +255,7 @@ class TransportGoal:
         # self.model.load_weights(fname)
         # raise NotImplementedError("need to write load for transport goal")
         self.model.load_state_dict(torch.load(fname)) 
+        self.model.eval()
 
     #-------------------------------------------------------------------------
     # Visualization.

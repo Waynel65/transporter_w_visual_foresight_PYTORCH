@@ -112,7 +112,7 @@ class Attention:
 
         # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
 
-        logits = logits.permute(3, 1, 2, 0)
+        # logits = logits.permute(3, 1, 2, 0)
         output = logits.reshape(1, -1)
         print(f"[DEBUG] Final output shape: {output.shape}")
         print(f"[DEBUG] Final logits shape: {logits.shape}")
@@ -162,6 +162,7 @@ class Attention:
         # self.model.load_weights(path)
         # raise NotImplementedError("need to write load for attention")
         self.model.load_state_dict(torch.load(path))
+        self.model.eval()
 
     def save(self, filename):
         # self.model.save(filename)
