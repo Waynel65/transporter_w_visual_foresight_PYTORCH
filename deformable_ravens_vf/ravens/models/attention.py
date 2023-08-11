@@ -4,8 +4,8 @@ import os
 import sys
 import cv2
 import numpy as np
-import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow as tf
+# import tensorflow_addons as tfa
 
 from ravens.models import ResNet43_8s
 from ravens import utils
@@ -211,7 +211,8 @@ class Attention:
         return loss.item()
 
     def load(self, path):
-        self.model.load_weights(path)
+        # self.model.load_weights(path)
+        raise NotImplementedError("need to write load for attention")
 
     def save(self, filename):
         # self.model.save(filename)

@@ -57,9 +57,16 @@ def main(unused_argv):
     tf.config.experimental.enable_op_determinism()
 
     # Model path.
-    dynamics_model_path = f'./dynamics_models/vf_{FLAGS.n_demos}/pp-dynamics-task6-demo{FLAGS.n_demos}-resnet_lite-seed{train_run}-step60000-ckpt-{FLAGS.dynamics_total_steps}.h5'
-    attention_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/attention-ckpt-{FLAGS.gctn_total_steps}.h5'
-    transport_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/transport-ckpt-{FLAGS.gctn_total_steps}.h5'
+    # dynamics_model_path = f'./dynamics_models/vf_{FLAGS.n_demos}/pp-dynamics-task6-demo{FLAGS.n_demos}-resnet_lite-seed{train_run}-step60000-ckpt-{FLAGS.dynamics_total_steps}.h5'
+    # attention_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/attention-ckpt-{FLAGS.gctn_total_steps}.h5'
+    # transport_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/transport-ckpt-{FLAGS.gctn_total_steps}.h5'
+
+    # pytorch models
+    dynamics_model_path = f'./dynamics_models/vf_{FLAGS.n_demos}/pp-dynamics-task6-demo{FLAGS.n_demos}-resnet_lite-seed{train_run}-step60000-ckpt-{FLAGS.dynamics_total_steps}.pth'
+    # attention_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/attention-ckpt-{FLAGS.gctn_total_steps}.pth'
+    # transport_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/transport-ckpt-{FLAGS.gctn_total_steps}.pth'
+    attention_model_path = './gctn_models/attention-ckpt-8000.pth'
+    transport_model_path = './gctn_models/transport-ckpt-8000.pth'
       
     # Initialize the tree.
     Planner = BestFirstSearch(

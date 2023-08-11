@@ -5,8 +5,8 @@ import sys
 
 import cv2
 import numpy as np
-import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow as tf
+# import tensorflow_addons as tfa
 import matplotlib.pyplot as plt
 
 from ravens.models import ResNet43_8s
@@ -251,7 +251,8 @@ class TransportGoal:
         torch.save(self.model.state_dict(), fname)
 
     def load(self, fname):
-        self.model.load_weights(fname)
+        # self.model.load_weights(fname)
+        raise NotImplementedError("need to write load for transport goal")
 
     #-------------------------------------------------------------------------
     # Visualization.

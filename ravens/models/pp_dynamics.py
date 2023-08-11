@@ -285,7 +285,8 @@ class PPDynamics(object):
 
   def load(self, path):
     """Load model weights."""
-    self.model.load_weights(path)
+    # self.model.load_weights(path)
+    self.model(load_state_dict(torch.load(path))) #? will this work?
   
   def save(self, filename):
     """Save the model."""
