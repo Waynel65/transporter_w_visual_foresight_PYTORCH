@@ -112,7 +112,7 @@ class Attention:
 
         # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
 
-        # logits = logits.permute(3, 1, 2, 0)
+        logits = logits.permute(0, 3, 1, 2)
         output = logits.reshape(1, -1)
         print(f"[DEBUG] Final output shape: {output.shape}")
         print(f"[DEBUG] Final logits shape: {logits.shape}")
