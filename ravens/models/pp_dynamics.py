@@ -159,8 +159,8 @@ class PPDynamics(object):
     place_mask = place_mask.to(self.device)
 
     print(f"[PP_Dynamics] init_img: {init_img.shape}")
-    print(f"[PP_Dynamics] init_img: {pick_mask.unsqueeze(0).shape}")
-    print(f"[PP_Dynamics] init_img: {place_mask.shape}")
+    print(f"[PP_Dynamics] pick_mask: {pick_mask.unsqueeze(0).shape}")
+    print(f"[PP_Dynamics] place_mask: {place_mask.shape}")
 
 
     # Concatenate init_img, pick_mask, and place_mask.
