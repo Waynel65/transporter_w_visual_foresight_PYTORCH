@@ -177,7 +177,7 @@ class TransportGoal:
             output_shape = output.shape
             output = output.view(1, -1)
             output = F.softmax(output, dim=1)
-            output = output.view(output_shape[1:]).numpy()
+            output = output.view(output_shape[1:]).detach().numpy()
 
         return output
 
