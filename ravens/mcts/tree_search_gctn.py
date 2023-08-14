@@ -11,6 +11,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+import pdb
+
 
 class BestFirstSearch:
   """Class to perform best first search for visual task planning."""
@@ -249,6 +251,7 @@ class BestFirstSearch:
     next_imgs_2 = []
     next_imgs_means_2 = []
 
+    pdb.set_trace()
     # ! this loop is causing problem
     # ! specifically the second line
     for i in range(self.k):
