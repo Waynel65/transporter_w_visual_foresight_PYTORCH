@@ -14,6 +14,8 @@ from ravens.utils_gctn import utils
 
 import tensorflow as tf
 
+import pdb
+
 
 class TransporterAgent:
 
@@ -165,6 +167,7 @@ class TransporterAgent:
         # prob need to convert back to original tensorflow based dimension
         # otherwise this will not work
         print(f"[DEBUG] attention's shape in eval: {attention.shape}")
+        pdb.set_trace()
         argmax = np.argmax(attention)
         argmax = np.unravel_index(argmax, shape=attention.shape)
         p0_pixel = argmax[:2]
