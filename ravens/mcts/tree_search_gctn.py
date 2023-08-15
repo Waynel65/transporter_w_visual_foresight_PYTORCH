@@ -99,6 +99,9 @@ class BestFirstSearch:
       next_imgs: list of images after taking the actions.
     """ 
 
+    pdb.set_trace()
+
+    # ! the problem is in this function somewhere
     # Get the policy and imagined images for each primitive.
     acts = []
     next_imgs = []
@@ -251,9 +254,8 @@ class BestFirstSearch:
     next_imgs_2 = []
     next_imgs_means_2 = []
 
-    pdb.set_trace()
-    # ! this loop is causing problem
-    # ! specifically the second line
+    # pdb.set_trace()
+
     for i in range(self.k):
       img = self.make_rgbhhh(next_imgs_means_1[i])
       acts_2_primitive, next_imgs_2_primitive, next_imgs_means_2_primitive = self.expand_img(img, visualize)
