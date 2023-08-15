@@ -111,7 +111,7 @@ class BestFirstSearch:
       next_imgs.append([])
     
     # ! the problem is in this loop somewhere
-    pdb.set_trace()
+    # pdb.set_trace()
     for i in range(len(acts)):
       for j in range(self.num_bootstraps):
         input_img = np.copy(img_rgbhhh)
