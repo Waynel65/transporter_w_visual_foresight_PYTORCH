@@ -10,6 +10,8 @@ import torch
 from torchvision.transforms.functional import rotate
 # from tensorflow_addons import image as tfa_image
 
+import pdb
+
 
 class PPDynamics(object):
   """PP dynamics module."""
@@ -232,7 +234,7 @@ class PPDynamics(object):
 
   def imagine(self, init_img, p0, p1, p1_theta, h_only):
     """Imagine the image after taking the action."""
-    
+    pdb.set_trace()
     # Subtract means and divide by std.
     init_img = self.preprocess_input(init_img, h_only)
 
