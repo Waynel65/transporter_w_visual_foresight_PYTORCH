@@ -109,7 +109,7 @@ class BestFirstSearch:
     input_img = np.copy(img_rgbhhh)
     goal_img = np.copy(self.goal_img_rgbhhh)
     acts = self.agent.get_top_k_acts(self.k, input_img, goal_img)
-
+    pdb.set_trace()
     for i in range(len(acts)):
       next_imgs.append([])
     
