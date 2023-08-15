@@ -99,9 +99,7 @@ class BestFirstSearch:
       next_imgs: list of images after taking the actions.
     """ 
 
-    pdb.set_trace()
 
-    # ! the problem is in this function somewhere
     # Get the policy and imagined images for each primitive.
     acts = []
     next_imgs = []
@@ -109,10 +107,11 @@ class BestFirstSearch:
     input_img = np.copy(img_rgbhhh)
     goal_img = np.copy(self.goal_img_rgbhhh)
     acts = self.agent.get_top_k_acts(self.k, input_img, goal_img)
-    pdb.set_trace()
     for i in range(len(acts)):
       next_imgs.append([])
     
+    # ! the problem is in this loop somewhere
+    pdb.set_trace()
     for i in range(len(acts)):
       for j in range(self.num_bootstraps):
         input_img = np.copy(img_rgbhhh)
