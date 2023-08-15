@@ -244,6 +244,7 @@ class PPDynamics(object):
     # Forward pass.
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
     out_tens = out_tens.detach().cpu()
+    out_tens = out_tens.permute(0,2,3,1)
     # Postprocess output tensor.
     out_data = out_tens.numpy()[0][self.pad_size:(-self.pad_size), self.pad_size:(-self.pad_size)]
     out_img = self.postprocess_output(out_data, h_only)
