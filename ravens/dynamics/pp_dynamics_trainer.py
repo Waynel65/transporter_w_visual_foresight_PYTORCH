@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+import pdb
+
 
 class PPDynamicsTrainer:
   """Class for training the PP (pick-and-place) dynamics."""
@@ -401,7 +403,7 @@ class PPDynamicsTrainer:
       act: action. It is a dictionary in the form as
         {'pose0': (pos0, quat0), 'pose1': (pos1, quat1)}
     """
-
+    pdb.set_trace()
     p0_xyz, p0_xyzw = act['pose0']
     p1_xyz, p1_xyzw = act['pose1']
     p0 = utils.xyz_to_pix(p0_xyz, self.bounds, self.pix_size)
