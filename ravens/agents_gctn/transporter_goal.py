@@ -181,7 +181,9 @@ class TransporterAgent:
             transport = self.transport_model.forward(img_curr, img_goal, p0_pixel)
         else:
             transport = self.transport_model.forward(input_image, p0_pixel)
+        
 
+        # this is the core algorithm described in the paper
         if k > 1:
             n = 100
             max_map_idx = np.argmax(transport, axis=2)
