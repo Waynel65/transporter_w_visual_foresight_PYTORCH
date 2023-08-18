@@ -277,7 +277,7 @@ class PPDynamicsTrainer:
     """Validation for PP Dynamics."""
 
     # Set learning phase as testing.
-    tf.keras.backend.set_learning_phase(0)
+    # tf.keras.backend.set_learning_phase(0)
 
     dataset_num = dataset.dataset_num
 

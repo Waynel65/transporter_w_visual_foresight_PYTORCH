@@ -124,7 +124,7 @@ class PPDynamics(object):
 
   def forward_pp(self, init_img, p0, p1, p1_theta):
     """Forward pass."""
-
+    pdb.set_trace()
     # init_img should come in as a numpy matrix
     # Pick mask.
     # a mask that is positive around the center but zero elsewhere
@@ -272,28 +272,50 @@ class PPDynamics(object):
 
     # Forward pass.
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
+    pdb.set_trace()
 
     # Get loss.
-    target_tens = tf.convert_to_tensor(target_img, dtype=tf.float32)
-    diff = tf.abs(target_tens - out_tens)
-    b, h, w, c = diff.shape
+    # target_tens = tf.convert_to_tensor(target_img, dtype=tf.float32)
+    # diff = tf.abs(target_tens - out_tens)
+    # b, h, w, c = diff.shape
+    # if h_only:
+    #   rgb_loss = 0.0
+    #   height_loss = tf.reduce_mean(diff)
+    # else:
+    #   assert c == 4
+    #   loss_R = tf.reduce_sum(diff[:, :, :, 0])
+    #   loss_G = tf.reduce_sum(diff[:, :, :, 1])
+    #   loss_B = tf.reduce_sum(diff[:, :, :, 2])
+    #   loss_H = tf.reduce_sum(diff[:, :, :, 3])
+    #   rgb_loss = (loss_R + loss_G + loss_B) / (b * h * w * 3)
+    #   height_loss = loss_H / (b * h * w)
+
+    # get loss
+    target_img = torch.from_numpy(target_img).to(self.device).float()
+    target_img = target_img.permute(2, 0, 1).unsqueeze(0)
+
+    diff = torch.abs(target_img - out_tens)
+    b, c, h, w = diff.shape
+
     if h_only:
-      rgb_loss = 0.0
-      height_loss = tf.reduce_mean(diff)
+      loss = torch.mean(diff)
     else:
-      assert c == 4
-      loss_R = tf.reduce_sum(diff[:, :, :, 0])
-      loss_G = tf.reduce_sum(diff[:, :, :, 1])
-      loss_B = tf.reduce_sum(diff[:, :, :, 2])
-      loss_H = tf.reduce_sum(diff[:, :, :, 3])
-      rgb_loss = (loss_R + loss_G + loss_B) / (b * h * w * 3)
+      loss_R = torch.sum(diff[:, 0, :, :])
+      loss_G = torch.sum(diff[:, 1, :, :])
+      loss_B = torch.sum(diff[:, 2, :, :])
+      loss_H = torch.sum(diff[:, 3, :, :])
+      rgb_loss = (loss_R + loss_G + loss_B + repeat_H_lambda * loss_H) / (b * h * w * 3)
       height_loss = loss_H / (b * h * w)
+
+    # permute the tensor back to tensorflow based convention
+    out_tens = out_tens.detach().cpu()
+    out_tens = out_tens.permute(0,2,3,1)
 
     # Postprocess output tensor.
     out_data = out_tens.numpy()[0][self.pad_size:(-self.pad_size), self.pad_size:(-self.pad_size)]
     out_img = self.postprocess_output(out_data, h_only)
 
-    return out_img, np.float32(rgb_loss), np.float32(height_loss)
+    return out_img, rgb_loss.item(), height_loss.item()
 
   def load(self, path):
     """Load model weights."""
