@@ -160,9 +160,9 @@ class PPDynamics(object):
     place_mask[:, p1[0]:(p1[0]+self.mask_size), p1[1]:(p1[1]+self.mask_size)] = crop
     place_mask = place_mask.to(self.device)
 
-    print(f"[PP_Dynamics] init_img: {init_img.shape}")
-    print(f"[PP_Dynamics] pick_mask: {pick_mask.unsqueeze(0).shape}")
-    print(f"[PP_Dynamics] place_mask: {place_mask.shape}")
+    # print(f"[PP_Dynamics] init_img: {init_img.shape}")
+    # print(f"[PP_Dynamics] pick_mask: {pick_mask.unsqueeze(0).shape}")
+    # print(f"[PP_Dynamics] place_mask: {place_mask.shape}")
 
 
     # Concatenate init_img, pick_mask, and place_mask.
@@ -295,7 +295,7 @@ class PPDynamics(object):
     target_img = target_img.permute(2, 0, 1).unsqueeze(0)
 
     diff = torch.abs(target_img - out_tens)
-    b, c, h, w = diff.shape
+    b, c, h, w = diff.shape # pytorch convention
 
     if h_only:
       loss = torch.mean(diff)
