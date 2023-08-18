@@ -59,7 +59,7 @@ def main(unused_argv):
 
   for train_run in range(FLAGS.n_runs):
     # Model path.
-    dynamics_model_path = f'./dynamics_models/vf_{FLAGS.n_demos}/pp-dynamics-task6-demo{FLAGS.n_demos}-resnet_lite-seed{train_run}-step60000-ckpt-{FLAGS.dynamics_total_steps}.h5'
+    dynamics_model_path = f'./dynamics_models/vf_{FLAGS.n_demos}/pp-dynamics-task6-demo{FLAGS.n_demos}-resnet_lite-seed{train_run}-step60000-ckpt-{FLAGS.dynamics_total_steps}.pth'
     
     print(f"Dynamics Model: {dynamics_model_path}")
     print(f'Evaluating on {FLAGS.task_set} tasks...')
