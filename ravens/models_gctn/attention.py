@@ -118,6 +118,7 @@ class Attention:
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
+            output = output.detach().numpy()
         print(f"[DEBUG] Final output shape: {output.shape}")
         return output
 
