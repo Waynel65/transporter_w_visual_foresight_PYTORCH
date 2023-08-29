@@ -14,6 +14,8 @@ from ravens import tasks
 from ravens import dataset
 from ravens.environments.environment_mcts import EnvironmentMCTS
 
+import pdb
+
 
 flags.DEFINE_string('data_dir', './data_test', '')
 flags.DEFINE_string('assets_root', './ravens/environments/assets/', '')
@@ -96,6 +98,8 @@ def main(unused_argv):
       total_reward = 0
       reward = 0
       num_test += 1
+
+      pdb.set_trace()
 
       # task.max_steps includes two steps for random actions in data collection.
       for _ in range(task.max_steps-2):
