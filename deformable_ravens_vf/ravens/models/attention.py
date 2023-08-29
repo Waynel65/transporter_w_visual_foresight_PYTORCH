@@ -56,57 +56,6 @@ class Attention:
         self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
         
 
-
-    # def forward(self, in_img, softmax=True):
-    #     in_data = np.pad(in_img, self.padding, mode='constant')
-    #     in_data = self.preprocess(in_data)
-    #     in_shape = (1,) + in_data.shape
-    #     in_data = in_data.reshape(in_shape)
-    #     in_tens = torch.from_numpy(in_data).float().to(self.device)
-
-    #     # Rotate input.
-    #     pivot = torch.tensor(in_data.shape[1:3]) / 2
-    #     rvecs = self.get_se2(self.num_rotations, pivot)
-    #     in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
-    #     for i in range(self.num_rotations):
-    #         rvec = rvecs[i]
-    #         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-    #         in_tens[i] = TF.rotate(in_tens[i], angle)
-
-    #     # Forward pass.
-    #     logits = []
-    #     for x in torch.split(in_tens, 1):
-    #         x = x.permute(0, 3, 1, 2)
-    #         logits.append(self.model(x))
-    #     logits = torch.cat(logits, dim=0)
-
-    #     print(f"[ATTENTION] logits has shape of {logits.shape}")
-
-    #     # Rotate back output.
-    #     rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
-    #     for i in range(self.num_rotations):
-    #         rvec = rvecs[i]
-    #         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-    #         logits[i] = TF.rotate(logits[i], angle) # assuming rvecs are in degrees
-    #     c0 = torch.tensor(self.padding[:2, 0])
-
-    #     print(f"[ATTENTION] c0 has shape of {c0.shape}")
-
-
-    #     c1 = c0 + torch.tensor(in_img.shape[:2])
-    #     logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
-
-    #     print(f"[ATTENTION] logits has shape of {logits.shape}")
-
-    #     logits = logits.permute(3, 1, 2, 0)
-    #     output = logits.reshape(1, -1)
-
-    #     print(f"[ATTENTION] output has shape of {output.shape}")
-    #     if softmax:
-    #         output = F.softmax(output, dim=-1)
-    #         output = output.view(logits.shape[1:])
-    #     return output
-
     def forward(self, in_img, softmax=True):
         # print(f"[DEBUG] Original in_img shape: {in_img.shape}")
 

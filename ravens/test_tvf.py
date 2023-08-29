@@ -14,6 +14,8 @@ from ravens import dataset
 from ravens.mcts.tree_search_gctn import BestFirstSearch
 from ravens.environments.environment_mcts import EnvironmentMCTS
 
+import pdb
+
 
 flags.DEFINE_string('data_dir', './data_test', '')
 flags.DEFINE_string('assets_root', './ravens/environments/assets/', '')
@@ -106,6 +108,8 @@ def main(unused_argv):
     for i in range(FLAGS.n_tests):
       print(f'Test: {i + 1}/{ds.n_episodes}')
       episode, seed = ds.load(i)
+
+      pdb.set_trace()
 
       # Set the goal.
       goal = episode[-1]
