@@ -65,7 +65,7 @@ class Attention:
         in_data = self.preprocess(in_data)
         in_shape = (1,) + in_data.shape
         in_data = in_data.reshape(in_shape)
-        in_tens = torch.from_numpy(in_data).float().to(self.device)
+        in_tens = torch.from_numpy(in_data).to(self.device).float()
 
         # Rotate input.
         pivot = torch.tensor(in_data.shape[1:3]) / 2

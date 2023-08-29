@@ -99,7 +99,7 @@ def main(unused_argv):
       reward = 0
       num_test += 1
 
-      pdb.set_trace()
+      # pdb.set_trace()
 
       # task.max_steps includes two steps for random actions in data collection.
       for _ in range(task.max_steps-2):
