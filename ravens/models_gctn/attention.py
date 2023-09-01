@@ -65,7 +65,7 @@ class Attention:
 
         in_data = self.preprocess(in_data)
         in_shape = (1,) + in_data.shape
-        in_data = in_data.reshape(in_shape)
+        in_data = in_data.reshape(in_shape) # shape = (1,160,160,12)
         in_tens = torch.from_numpy(in_data).float().to(self.device)
 
         # Rotate input.
@@ -76,6 +76,7 @@ class Attention:
         in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
         # print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
 
+        # this part is equivalent to tensorflow's transform
         rotated_tens = torch.empty_like(in_tens)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
@@ -88,13 +89,15 @@ class Attention:
 
         # Forward pass.
         logits = []
-        for x in torch.split(in_tens, 1):
-            x = x.permute(0, 3, 1, 2)
+        for x in torch.split(in_tens, self.num_rotations): # ! could this be a problem? torch.split assumes a tensor based on torch dim
+            x = x.permute(0, 3, 1, 2) # permute to (1,1,160,160)
             out = self.model(x)
             # print(f"[DEBUG] out shape before concatenation: {out.shape}")
+            x = x.permute(0, 2, 3, 1)
             logits.append(out)
         logits = torch.cat(logits, dim=0)
         # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
+        # ! prob should rotate the tensor back before moving on
 
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
@@ -114,7 +117,7 @@ class Attention:
 
         # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
 
-        logits = logits.permute(0, 2, 3, 1)
+        # logits = logits.permute(0, 2, 3, 1) # ! maybe should permute earlier
         output = logits.reshape(1, -1)
         print(f"[DEBUG] Final logits shape: {logits.shape}")
         if softmax:

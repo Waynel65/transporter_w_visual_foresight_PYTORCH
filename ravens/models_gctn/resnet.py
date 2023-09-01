@@ -141,7 +141,7 @@ class ResNet43_8s(nn.Module):
 
         x = self.stage2a(x)
         x = self.stage2b(x)
-
+        
         if self.cutoff_early:
             return x
 
