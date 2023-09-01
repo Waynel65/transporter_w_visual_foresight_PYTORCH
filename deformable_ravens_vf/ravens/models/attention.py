@@ -113,16 +113,14 @@ class Attention:
         # print(f"[DEBUG] c1 shape after concatenation: {c1.shape}")
         logits = logits[:, c0[0]:c1[0], c0[1]:c1[1], :]
 
-        # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
-
-        # logits = logits.permute(0, 2, 3, 1) # ! maybe should permute earlier
-        output = logits.reshape(1, -1)
-        print(f"[DEBUG] Final logits shape: {logits.shape}")
+        logits = logits.permute(3, 1, 2, 0) # following the same permutation as the original code
+        output = logits.reshape(1, -1) # this turns the output into (1,25600)
+        # print(f"[DEBUG] Final logits shape: {logits.shape}")
         if softmax:
-            output = F.softmax(output, dim=-1)
+            # output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
             output = output.detach().cpu().numpy()
-        print(f"[DEBUG] Final output shape: {output.shape}")
+        # print(f"[DEBUG] Final output shape: {output.shape}")
         return output
 
 

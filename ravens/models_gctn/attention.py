@@ -118,7 +118,7 @@ class Attention:
         output = logits.reshape(1, -1) # this turns the output into (1,25600)
         # print(f"[DEBUG] Final logits shape: {logits.shape}")
         if softmax:
-            output = F.softmax(output, dim=-1)
+            # output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
             output = output.detach().cpu().numpy()
         # print(f"[DEBUG] Final output shape: {output.shape}")
