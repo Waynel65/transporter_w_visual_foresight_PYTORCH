@@ -58,7 +58,7 @@ class Attention:
 
     def forward(self, in_img, softmax=True):
         # print(f"[DEBUG] Original in_img shape: {in_img.shape}")
-        pdb.set_trace()
+        # pdb.set_trace()
         in_data = np.pad(in_img, self.padding, mode='constant')
         # print(f"[DEBUG] in_data shape after padding: {in_data.shape}")
 
