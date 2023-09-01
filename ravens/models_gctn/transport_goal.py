@@ -18,6 +18,8 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
+import pdb
+
 
 class TripleResnet(nn.Module):
     """
@@ -109,6 +111,7 @@ class TransportGoal:
         do another forward pass, which splits up the computation.
         """
 
+        pdb.set_trace()
         print(f"[TRANS_goal] in_img.shape: {in_img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
