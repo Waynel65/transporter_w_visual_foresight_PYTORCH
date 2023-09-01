@@ -89,15 +89,14 @@ class Attention:
 
         # Forward pass.
         logits = []
-        for x in torch.split(in_tens, self.num_rotations): # ! could this be a problem? torch.split assumes a tensor based on torch dim
+        for x in torch.split(in_tens, self.num_rotations): 
             x = x.permute(0, 3, 1, 2) # permute to (1,1,160,160)
             out = self.model(x)
             # print(f"[DEBUG] out shape before concatenation: {out.shape}")
             out = out.permute(0, 2, 3, 1)
             logits.append(out)
-        logits = torch.cat(logits, dim=0)
+        logits = torch.cat(logits, dim=0) # should be back to (1,160,160,1)
         # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
-        # ! prob should rotate the tensor back before moving on
 
         # Rotate back output.
         rvecs = self.get_se2(self.num_rotations, pivot, reverse=True)
