@@ -58,14 +58,14 @@ class Attention:
 
     def forward(self, in_img, softmax=True):
         # print(f"[DEBUG] Original in_img shape: {in_img.shape}")
-
+        pdb.set_trace()
         in_data = np.pad(in_img, self.padding, mode='constant')
         # print(f"[DEBUG] in_data shape after padding: {in_data.shape}")
 
         in_data = self.preprocess(in_data)
         in_shape = (1,) + in_data.shape
-        in_data = in_data.reshape(in_shape)
-        in_tens = torch.from_numpy(in_data).to(self.device).float()
+        in_data = in_data.reshape(in_shape) # shape = (1,160,160,12)
+        in_tens = torch.from_numpy(in_data).float().to(self.device)
 
         # Rotate input.
         pivot = torch.tensor(in_data.shape[1:3]) / 2
@@ -75,6 +75,7 @@ class Attention:
         in_tens = in_tens.repeat(self.num_rotations, 1, 1, 1)
         # print(f"[DEBUG] in_tens shape after repeat: {in_tens.shape}")
 
+        # this part is equivalent to tensorflow's transform
         rotated_tens = torch.empty_like(in_tens)
         for i in range(self.num_rotations):
             rvec = rvecs[i]
@@ -87,12 +88,13 @@ class Attention:
 
         # Forward pass.
         logits = []
-        for x in torch.split(in_tens, 1):
-            x = x.permute(0, 3, 1, 2)
+        for x in torch.split(in_tens, self.num_rotations): 
+            x = x.permute(0, 3, 1, 2) # permute to (1,1,160,160)
             out = self.model(x)
             # print(f"[DEBUG] out shape before concatenation: {out.shape}")
+            out = out.permute(0, 2, 3, 1)
             logits.append(out)
-        logits = torch.cat(logits, dim=0)
+        logits = torch.cat(logits, dim=0) # should be back to (1,160,160,1)
         # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
 
         # Rotate back output.
@@ -113,13 +115,14 @@ class Attention:
 
         # print(f"[DEBUG] logits shape after slicing: {logits.shape}")
 
-        logits = logits.permute(3, 1, 2, 0)
+        # logits = logits.permute(0, 2, 3, 1) # ! maybe should permute earlier
         output = logits.reshape(1, -1)
-        # print(f"[DEBUG] Final output shape: {output.shape}")
-
+        print(f"[DEBUG] Final logits shape: {logits.shape}")
         if softmax:
             output = F.softmax(output, dim=-1)
             output = output.view(logits.shape[1:])
+            output = output.detach().cpu().numpy()
+        print(f"[DEBUG] Final output shape: {output.shape}")
         return output
 
 
@@ -161,7 +164,9 @@ class Attention:
 
     def load(self, path):
         # self.model.load_weights(path)
-        raise NotImplementedError("need to write load for attention")
+        # raise NotImplementedError("need to write load for attention")
+        self.model.load_state_dict(torch.load(path))
+        self.model.eval()
 
     def save(self, filename):
         # self.model.save(filename)
