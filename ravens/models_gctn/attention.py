@@ -93,7 +93,7 @@ class Attention:
             x = x.permute(0, 3, 1, 2) # permute to (1,1,160,160)
             out = self.model(x)
             # print(f"[DEBUG] out shape before concatenation: {out.shape}")
-            x = x.permute(0, 2, 3, 1)
+            out = out.permute(0, 2, 3, 1)
             logits.append(out)
         logits = torch.cat(logits, dim=0)
         # print(f"[DEBUG] logits shape after concatenation: {logits.shape}")
