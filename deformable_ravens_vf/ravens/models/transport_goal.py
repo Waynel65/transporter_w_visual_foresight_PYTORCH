@@ -108,7 +108,7 @@ class TransportGoal:
         do another forward pass, which splits up the computation.
         """
 
-        pdb.set_trace()
+        # pdb.set_trace()
         print(f"[TRANS_goal] in_img.shape: {in_img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
