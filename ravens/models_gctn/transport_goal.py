@@ -182,7 +182,7 @@ class TransportGoal:
         output = F.conv2d(goal_x_in_logits, kernel) # cross-convolution
         output = (1 / (self.crop_size**2)) * output # normalization
 
-        output = output.permute(0, 2, 3, 1)
+        output = output.permute(0, 2, 3, 1) # added in ravens only
         # pytorch convention end #
 
         pdb.set_trace()

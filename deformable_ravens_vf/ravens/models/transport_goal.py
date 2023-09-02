@@ -108,6 +108,7 @@ class TransportGoal:
         do another forward pass, which splits up the computation.
         """
 
+        pdb.set_trace()
         print(f"[TRANS_goal] in_img.shape: {in_img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
@@ -128,14 +129,16 @@ class TransportGoal:
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
-        pivot = np.array([p[1], p[0]]) + self.pad_size
+        pivot = np.array([p[1], p[0]]) + self.pad_size # here p is based on the output of attention
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
 
+        # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
-        print(f"[TRANS_goal] in_logits have a shape of {in_logits.shape}")
-        print(f"[TRANS_goal] kernel_nocrop_logits have a shape of {kernel_nocrop_logits.shape}")
-        print(f"[TRANS_goal] goal_logits have a shape of {goal_logits.shape}")
+        # conduct re-permute here to avoid problems
+        # in_logits = in_logits.permute(0, 2, 3, 1)
+        # kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
+        # goal_logits = goal_logits.permute(0, 2, 3, 1)
         
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
@@ -151,43 +154,44 @@ class TransportGoal:
             angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
             rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
         crop = rotated_crop
+        
+        # pdb.set_trace()
 
         # kernel = crop[:,
-        #             p[0]:(p[0] + self.crop_size),
-        #             p[1]:(p[1] + self.crop_size),
-        #             :]
+        #               p[0]:(p[0] + self.crop_size),
+        #               p[1]:(p[1] + self.crop_size),
+        #               :]
         kernel = crop[:, :,
-              p[0]:(p[0] + self.crop_size),
-              p[1]:(p[1] + self.crop_size)]
+        p[0]:(p[0] + self.crop_size),
+        p[1]:(p[1] + self.crop_size)]
 
         # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
         # assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
         assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
 
-        kernel = F.pad(kernel, (0, 1, 0, 1))                            
-        # kernel = kernel.permute(0, 2, 3, 1) 
-        # print(f"[TRANS_goal] kernel have a shape of {kernel.shape}")
-        # print(f"[TRANS_goal] goal_x_in_logits have a shape of {goal_x_in_logits.shape}")
-        output = F.conv2d(goal_x_in_logits, kernel)
-        output = (1 / (self.crop_size**2)) * output
+        kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+        # ! do we really need depth convolution here?
+        # kernel_shape = kernel.shape
+        # kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
+        # output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
+
+        output = F.conv2d(goal_x_in_logits, kernel) # cross-convolution
+        output = (1 / (self.crop_size**2)) * output # normalization
+
+        # output = output.permute(0, 2, 3, 1)
+
+        pdb.set_trace()
 
         if apply_softmax:
             output_shape = output.shape
-            output = output.view(1, -1)
+            output = output.view(1,-1)
             output = F.softmax(output, dim=1)
-            output = output.view(output_shape[1:]).numpy()
+            output = output.view(output_shape[1:])
+            # output = output.detach().numpy()
+        print(f"[DEBUG in trans_goal] final output shape: {output.shape}")
 
         return output
-
-        # Daniel: visualize crops and kernels, for Transporter-Goal figure.
-        #self.visualize_images(p, in_img, input_data, crop)
-        #self.visualize_transport(p, in_img, input_data, crop, kernel)
-        #self.visualize_logits(in_logits,            name='input')
-        #self.visualize_logits(goal_logits,          name='goal')
-        #self.visualize_logits(kernel_nocrop_logits, name='kernel')
-        #self.visualize_logits(goal_x_in_logits,     name='goal_x_in')
-        #self.visualize_logits(goal_x_kernel_logits, name='goal_x_kernel')
 
 
     def train(self, in_img, goal_img, p, q, theta):
@@ -199,8 +203,8 @@ class TransportGoal:
         axis, but only provide the label to one single (pixel,rotation).
         """
         # self.metric.reset_states()
-        output = self.forward(in_img, goal_img, p, apply_softmax=False)
-        output = output.to(self.device)
+        output = self.forward(in_img, goal_img, p, apply_softmax=False) # still in pytorch format and on device
+        # output = output.to(self.device)
 
         # Compute label
         itheta = theta / (2 * np.pi / self.num_rotations)
