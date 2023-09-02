@@ -18,6 +18,8 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
+import pdb
+
 class TripleResnet(nn.Module):
     """
         This class will encapsulate the three resnets used
@@ -135,6 +137,7 @@ class TransportGoal:
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
 
+        pdb.set_trace()
         # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
         # conduct re-permute here to avoid problems
