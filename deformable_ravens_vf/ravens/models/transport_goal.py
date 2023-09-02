@@ -120,7 +120,7 @@ class TransportGoal:
         input_shape = (1,) + input_data.shape
         input_data = input_data.reshape(input_shape)                    # (1,384,224,6)
         in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,384,224)
-        in_tensor = in_tensor.to(self.device)
+        # in_tensor = in_tensor.to(self.device)
         print(f"[TRANS_goal] in_tensor.shape: {in_tensor.shape}")
 
         # goal image --> Torch tensor
@@ -129,7 +129,7 @@ class TransportGoal:
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,384,224,6)
         goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,384,224)
-        goal_tensor = goal_tensor.to(self.device)
+        # goal_tensor = goal_tensor.to(self.device)
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
@@ -137,7 +137,7 @@ class TransportGoal:
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
 
-        pdb.set_trace()
+        # pdb.set_trace()
         # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
         # conduct re-permute here to avoid problems
@@ -209,7 +209,7 @@ class TransportGoal:
         """
         # self.metric.reset_states()
         output = self.forward(in_img, goal_img, p, apply_softmax=False) # still in pytorch format and on device
-        # output = output.to(self.device)
+        output = output.to(self.device)
 
         # Compute label
         itheta = theta / (2 * np.pi / self.num_rotations)
