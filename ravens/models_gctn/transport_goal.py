@@ -179,6 +179,8 @@ class TransportGoal:
         output = output.permute(0, 2, 3, 1)
         # pytorch convention end #
 
+        pdb.set_trace()
+
         if apply_softmax:
             output_shape = output.shape
             output = output.view(1, -1)
