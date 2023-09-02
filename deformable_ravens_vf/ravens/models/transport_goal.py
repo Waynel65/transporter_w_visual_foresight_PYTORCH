@@ -181,7 +181,7 @@ class TransportGoal:
 
         # output = output.permute(0, 2, 3, 1)
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         if apply_softmax:
             output_shape = output.shape
