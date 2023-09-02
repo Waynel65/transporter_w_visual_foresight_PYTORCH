@@ -174,9 +174,11 @@ class TransportGoal:
         # at this point we should have kernel shape == (36,3,64,64)
 
         kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
-        kernel_shape = kernel.shape
-        kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
-        output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
+        # kernel_shape = kernel.shape
+        # kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
+        # output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
+
+        output = F.conv2d(goal_x_in_logits, kernel) # cross-convolution
         output = (1 / (self.crop_size**2)) * output # normalization
 
         output = output.permute(0, 2, 3, 1)
