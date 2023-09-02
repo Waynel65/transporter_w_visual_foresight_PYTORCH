@@ -132,14 +132,16 @@ class TransportGoal:
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
-        pivot = np.array([p[1], p[0]]) + self.pad_size
+        pivot = np.array([p[1], p[0]]) + self.pad_size # here p is based on the output of attention
         rvecs = self.get_se2(self.num_rotations, pivot)
         print(f"[TRANS_goal] RVECS have a shape of {rvecs.shape}")
 
+        # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
-        print(f"[TRANS_goal] in_logits have a shape of {in_logits.shape}")
-        print(f"[TRANS_goal] kernel_nocrop_logits have a shape of {kernel_nocrop_logits.shape}")
-        print(f"[TRANS_goal] goal_logits have a shape of {goal_logits.shape}")
+        # conduct re-permute here to avoid problems
+        # in_logits = in_logits.permute(0, 2, 3, 1)
+        # kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
+        # goal_logits = goal_logits.permute(0, 2, 3, 1)
         
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
@@ -159,33 +161,29 @@ class TransportGoal:
         pdb.set_trace()
 
         # kernel = crop[:,
-        #             p[0]:(p[0] + self.crop_size),
-        #             p[1]:(p[1] + self.crop_size),
-        #             :]
+        #               p[0]:(p[0] + self.crop_size),
+        #               p[1]:(p[1] + self.crop_size),
+        #               :]
         kernel = crop[:, :,
-              p[0]:(p[0] + self.crop_size),
-              p[1]:(p[1] + self.crop_size)]
+        p[0]:(p[0] + self.crop_size),
+        p[1]:(p[1] + self.crop_size)]
 
         # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
         # assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
         assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
 
-        kernel = F.pad(kernel, (0, 1, 0, 1))                            
-        # kernel = kernel.permute(0, 2, 3, 1) 
-        # print(f"[TRANS_goal] kernel have a shape of {kernel.shape}")
-        # print(f"[TRANS_goal] goal_x_in_logits have a shape of {goal_x_in_logits.shape}")
-        output = F.conv2d(goal_x_in_logits, kernel)
-        output = (1 / (self.crop_size**2)) * output
+        kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)                            
+        output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
+        output = (1 / (self.crop_size**2)) * output # normalization
+        output = output.permute(0, 2, 3, 1)
+        # pytorch convention end #
 
         if apply_softmax:
             output_shape = output.shape
-            print(f"[DEBUG in trans_goal] final output shape before slicing: {output_shape}")
             output = output.view(1, -1)
             output = F.softmax(output, dim=1)
-            # output = output.permute(0,2,3,1)
             output = output.view(output_shape[1:])
-            output = output.permute(1,2,0)
             output = output.detach().numpy()
         print(f"[DEBUG in trans_goal] final output shape: {output.shape}")
 
