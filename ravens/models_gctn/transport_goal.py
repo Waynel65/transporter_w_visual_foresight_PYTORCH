@@ -158,7 +158,7 @@ class TransportGoal:
             rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
         crop = rotated_crop
         
-        pdb.set_trace()
+        # pdb.set_trace()
 
         # kernel = crop[:,
         #               p[0]:(p[0] + self.crop_size),
