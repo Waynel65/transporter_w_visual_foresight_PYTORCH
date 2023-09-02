@@ -174,6 +174,7 @@ class TransportGoal:
         # at this point we should have kernel shape == (36,3,64,64)
 
         kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+        # ! do we really need depth convolution here?
         # kernel_shape = kernel.shape
         # kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
         # output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
@@ -188,7 +189,7 @@ class TransportGoal:
 
         if apply_softmax:
             output_shape = output.shape
-            output = output.view(1, -1)
+            output = output.reshape(1, -1)
             output = F.softmax(output, dim=1)
             output = output.view(output_shape[1:])
             output = output.detach().numpy()
