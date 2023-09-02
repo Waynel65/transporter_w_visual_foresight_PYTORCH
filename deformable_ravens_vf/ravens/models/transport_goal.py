@@ -118,6 +118,7 @@ class TransportGoal:
         input_shape = (1,) + input_data.shape
         input_data = input_data.reshape(input_shape)                    # (1,384,224,6)
         in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,384,224)
+        in_tensor = in_tensor.to(self.device)
         print(f"[TRANS_goal] in_tensor.shape: {in_tensor.shape}")
 
         # goal image --> Torch tensor
@@ -126,6 +127,7 @@ class TransportGoal:
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,384,224,6)
         goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,384,224)
+        goal_tensor = goal_tensor.to(self.device)
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
