@@ -2,7 +2,7 @@ import torch
 import tensorflow as tf
 import pdb
 
-# pdb.set_trace()
+pdb.set_trace()
 # PyTorch
 goal_x_in_logits_torch = torch.ones(1, 3, 224, 224)
 kernel_torch = torch.randn(36,3,65, 65)
