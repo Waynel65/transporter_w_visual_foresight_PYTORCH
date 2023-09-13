@@ -5,7 +5,7 @@ import pdb
 # pdb.set_trace()
 # PyTorch
 goal_x_in_logits_torch = torch.randn(1, 3, 224, 224)
-kernel_torch = torch.randn(3,36,65, 65)
+kernel_torch = torch.randn(36,3,65, 65)
 
 # TensorFlow
 goal_x_in_logits_tf = tf.convert_to_tensor(goal_x_in_logits_torch.permute(0, 2, 3, 1).numpy()) # changing to NHWC format
