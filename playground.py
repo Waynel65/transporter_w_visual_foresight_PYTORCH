@@ -15,7 +15,7 @@ output_torch = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch)
 # output = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch, groups=goal_x_in_logits_torch.shape[1])
 
 # kernel_tf_transposed = tf.transpose(kernel_tf, [1, 2, 3, 0]) # 
-output_tf = tf.nn.convolution(goal_x_in_logits_tf, kernel_tf_transposed, data_format="NHWC")
+output_tf = tf.nn.convolution(goal_x_in_logits_tf, kernel_tf, data_format="NHWC")
 
 output_tf_torch = torch.tensor(output_tf.numpy().transpose(0, 3, 1, 2)) # Convert TF tensor to PyTorch format (NCHW)
 diff = torch.nn.functional.mse_loss(output_torch, output_tf_torch)
