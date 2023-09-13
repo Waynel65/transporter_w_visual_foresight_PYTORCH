@@ -9,7 +9,7 @@ kernel_torch = torch.randn(36, 3, 65, 65)
 
 # TensorFlow
 goal_x_in_logits_tf = tf.convert_to_tensor(goal_x_in_logits_torch.permute(0, 2, 3, 1).numpy()) # changing to NHWC format
-kernel_tf = tf.convert_to_tensor(kernel_torch.permute(1, 2, 3, 0).numpy()) # to match TF's order
+kernel_tf = tf.convert_to_tensor(kernel_torch.permute(0,2,3,1).numpy()) # to match TF's order
 
 output_torch = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch)
 
