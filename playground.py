@@ -11,8 +11,8 @@ kernel_torch = torch.randn(3,36,65, 65)
 goal_x_in_logits_tf = tf.convert_to_tensor(goal_x_in_logits_torch.permute(0, 2, 3, 1).numpy()) # changing to NHWC format
 kernel_tf = tf.convert_to_tensor(kernel_torch.permute(0,2,3,1).numpy()) # to match TF's order
 
-# output_torch = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch)
-output = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch, groups=goal_x_in_logits_torch.shape[1])
+output_torch = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch)
+# output = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch, groups=goal_x_in_logits_torch.shape[1])
 
 # kernel_tf_transposed = tf.transpose(kernel_tf, [1, 2, 3, 0]) # 
 output_tf = tf.nn.convolution(goal_x_in_logits_tf, kernel_tf_transposed, data_format="NHWC")
