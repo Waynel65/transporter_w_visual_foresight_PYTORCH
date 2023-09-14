@@ -31,6 +31,12 @@ pdb.set_trace()
 in_logits = torch.load('in_logits.pth')
 kernel_nocrop_logits = torch.load('kernel_nocrop_logits.pth')
 goal_logits = torch.load('goal_logits.pth')
+# reshape to match tensorflow's output
+in_logits = in_logits.permute(0, 2, 3, 1)
+kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
+goal_logits = goal_logits.permute(0, 2, 3, 1)
+
+
 # convert to numpy
 in_logits_np = in_logits.detach().cpu().numpy()
 kernel_nocrop_logits_np = kernel_nocrop_logits.detach().cpu().numpy()
