@@ -143,6 +143,9 @@ class TransportGoal:
 
         # pytorch convention start
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor) # all have shape of (1,3,224,224)
+        torch.save(in_logits, 'in_logits.pth')
+        torch.save(kernel_nocrop_logits, 'kernel_nocrop_logits.pth')
+        torch.save(goal_logits, 'goal_logits.pth')
 
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits              # (1,3,224,224)
@@ -175,7 +178,6 @@ class TransportGoal:
         # kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
         # output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
 
-        # ? is the depth convolution necessary?
         # (batch, channel, height, width) <= 
         # (height, width, channel, batch)
         pdb.set_trace()
