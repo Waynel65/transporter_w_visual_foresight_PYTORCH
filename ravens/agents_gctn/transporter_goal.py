@@ -165,7 +165,7 @@ class TransporterAgent:
             attention = self.attention_model.forward(input_image)
 
         # print(f"[DEBUG] attention's shape in eval: {attention.shape}")
-        # pdb.set_trace()
+        pdb.set_trace()
         argmax = np.argmax(attention)
         argmax = np.unravel_index(argmax, shape=attention.shape)
         p0_pixel = argmax[:2]
@@ -298,6 +298,7 @@ class TransporterAgent:
             transport = self.transport_model.forward(img_curr, img_goal, p0_pixel)
         else:
             transport = self.transport_model.forward(input_image, p0_pixel)
+        pdb.set_trace()
         argmax = np.argmax(transport)
         argmax = np.unravel_index(argmax, shape=transport.shape)
         p1_pixel = argmax[:2]

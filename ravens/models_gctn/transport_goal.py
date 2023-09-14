@@ -74,7 +74,7 @@ class TransportGoal:
 
         print(f"input shape is {input_shape}")
 
-        self.model = TripleResnet(input_shape[2], output_dim)
+        self.model = TripleResnet(input_shape[2], output_dim).to(self.device)
         self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
         # 3 fully convolutional ResNets. Third one is for the goal.
@@ -121,6 +121,7 @@ class TransportGoal:
         input_shape = (1,) + input_data.shape                           
         input_data = input_data.reshape(input_shape)                    # (1,224,224,6)
         in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,224,224)
+        in_tensor = in_tensor.to(self.device)
         print(f"[TRANS_goal] in_tensor.shape: {in_tensor.shape}")
 
         # goal image --> Torch tensor
@@ -129,6 +130,7 @@ class TransportGoal:
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,224,224,6)
         goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,224,224)
+        goal_tensor = goal_tensor.to(self.device)
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
         
         # pdb.set_trace()
@@ -178,7 +180,7 @@ class TransportGoal:
         # (height, width, channel, batch)
         pdb.set_trace()
         # set up a dummy value here to test if that is necessary
-        
+
         output = F.conv2d(goal_x_in_logits, kernel) # (1,36,160,160)
         output = (1 / (self.crop_size**2)) * output # normalization
 
@@ -192,7 +194,7 @@ class TransportGoal:
             output = output.reshape(1, -1) # (1,921600)
             output = F.softmax(output, dim=1) # small discrepancy
             output = output.view(output_shape[1:]) # (160,160,36)
-            output = output.detach().numpy()
+            output = output.detach().cpu().numpy()
         print(f"[DEBUG in trans_goal] final output shape: {output.shape}")
 
         return output
