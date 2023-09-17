@@ -55,7 +55,6 @@ def main(unused_argv):
     # transport_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/transport-ckpt-{gctn_total_steps}.h5'
     attention_model_path = f'./gctn_models/attention-ckpt-{gctn_total_steps}.pth'
     transport_model_path = f'./gctn_models/transport-ckpt-{gctn_total_steps}.pth'
-
     # Initialize agent.
     name = f'GCTN-Multi-{FLAGS.agent}-{FLAGS.n_demos}-{FLAGS.gctn_total_steps}'
     agent = agents_gctn.names[FLAGS.agent](name, None, num_rotations=36) # goal transport agent
