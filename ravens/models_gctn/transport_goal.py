@@ -143,9 +143,9 @@ class TransportGoal:
 
         # pytorch convention start
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor) # all have shape of (1,3,224,224)
-        torch.save(in_logits, 'in_logits.pth')
-        torch.save(kernel_nocrop_logits, 'kernel_nocrop_logits.pth')
-        torch.save(goal_logits, 'goal_logits.pth')
+        # torch.save(in_logits, 'in_logits.pth')
+        # torch.save(kernel_nocrop_logits, 'kernel_nocrop_logits.pth')
+        # torch.save(goal_logits, 'goal_logits.pth')
 
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits              # (1,3,224,224)
@@ -174,22 +174,15 @@ class TransportGoal:
 
 
         kernel = F.pad(kernel, (0, 1, 0, 1)) # (36,3,65,65)
-        # kernel_shape = kernel.shape
-        # kernel = kernel.view(kernel_shape[0]*kernel_shape[1], 1, kernel_shape[2], kernel_shape[3])                            
-        # output = F.conv2d(goal_x_in_logits, kernel, groups=3) # cross-convolution
 
-        # (batch, channel, height, width) <= 
-        # (height, width, channel, batch)
-        pdb.set_trace()
-        # set up a dummy value here to test if that is necessary
+
 
         output = F.conv2d(goal_x_in_logits, kernel) # (1,36,160,160)
         output = (1 / (self.crop_size**2)) * output # normalization
 
         output = output.permute(0, 2, 3, 1) # permute back to (1,160,160,36)
         # pytorch convention end #
-
-        # pdb.set_trace()
+        pdb.set_trace()
 
         if apply_softmax:
             output_shape = output.shape

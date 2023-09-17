@@ -50,7 +50,7 @@ def main(unused_argv):
     # tf.config.experimental.enable_op_determinism()
 
     # Model path.
-    gctn_total_steps = 8000
+    gctn_total_steps = 4000
     # attention_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/attention-ckpt-{gctn_total_steps}.h5'
     # transport_model_path = f'./gctn_models/GCTN-Multi-transporter-goal-{FLAGS.n_demos}-{train_run}-rots-36-fin_g/transport-ckpt-{gctn_total_steps}.h5'
     attention_model_path = f'./gctn_models/attention-ckpt-{gctn_total_steps}.pth'
