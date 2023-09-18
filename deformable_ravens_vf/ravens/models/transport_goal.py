@@ -73,7 +73,7 @@ class TransportGoal:
 
         print(f"input shape is {input_shape}")
 
-        self.model = TripleResnet(input_shape[2], output_dim)
+        self.model = TripleResnet(input_shape[2], output_dim).to(self.device)
         self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
         # 3 fully convolutional ResNets. Third one is for the goal.
