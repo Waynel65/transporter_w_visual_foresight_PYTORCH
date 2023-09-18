@@ -110,7 +110,7 @@ class TransportGoal:
         do another forward pass, which splits up the computation.
         """
 
-        # pdb.set_trace()
+        pdb.set_trace()
         print(f"[TRANS_goal] in_img.shape: {in_img.shape}")
         assert in_img.shape == goal_img.shape, f'{in_img.shape}, {goal_img.shape}'
 
@@ -141,9 +141,9 @@ class TransportGoal:
         # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
         # conduct re-permute here to avoid problems
-        # in_logits = in_logits.permute(0, 2, 3, 1)
-        # kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
-        # goal_logits = goal_logits.permute(0, 2, 3, 1)
+        in_logits = in_logits.permute(0, 2, 3, 1)
+        kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
+        goal_logits = goal_logits.permute(0, 2, 3, 1) 
         
         # Use features from goal logits and combine with input and kernel.
         goal_x_in_logits     = goal_logits * in_logits
@@ -162,16 +162,22 @@ class TransportGoal:
         
         # pdb.set_trace()
 
+        # slicing based on original convention
+        kernel = crop[:,
+                p[0]:(p[0] + self.crop_size),
+                p[1]:(p[1] + self.crop_size),
+                :]
         # slicing based on torch's convention
-        kernel = crop[:, :,
-        p[0]:(p[0] + self.crop_size),
-        p[1]:(p[1] + self.crop_size)]
+        # kernel = crop[:, :,
+        # p[0]:(p[0] + self.crop_size),
+        # p[1]:(p[1] + self.crop_size)]
 
         # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
-        # assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
-        assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
+        assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
+        # assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
 
+        kernel = kernel.permute(0, 3, 1, 2)
         kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
         output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
         output = (1 / (self.crop_size**2)) * output # normalization
