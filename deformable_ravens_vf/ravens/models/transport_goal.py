@@ -209,7 +209,7 @@ class TransportGoal:
         """
         # self.metric.reset_states()
         output = self.forward(in_img, goal_img, p, apply_softmax=False) # still in pytorch format and on device
-        # output = output.to(self.device)
+        output = output.to(self.device)
 
         # Compute label
         itheta = theta / (2 * np.pi / self.num_rotations)
