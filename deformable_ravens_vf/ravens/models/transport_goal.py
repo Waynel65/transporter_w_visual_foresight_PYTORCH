@@ -177,6 +177,7 @@ class TransportGoal:
         # assert kernel.shape == (self.num_rotations, self.odim, self.crop_size, self.crop_size)
         # at this point we should have kernel shape == (36,3,64,64)
 
+        goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
         kernel = kernel.permute(0, 3, 1, 2)
         kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
         output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
