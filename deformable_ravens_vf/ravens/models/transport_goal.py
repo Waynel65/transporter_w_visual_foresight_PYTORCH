@@ -73,7 +73,8 @@ class TransportGoal:
 
         print(f"input shape is {input_shape}")
 
-        self.model = TripleResnet(input_shape[2], output_dim).to(self.device)
+        self.model = TripleResnet(input_shape[2], output_dim)
+        # self.model = TripleResnet(input_shape[2], output_dim).to(self.device)
         self.optim = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
         # 3 fully convolutional ResNets. Third one is for the goal.
@@ -120,7 +121,7 @@ class TransportGoal:
         input_shape = (1,) + input_data.shape
         input_data = input_data.reshape(input_shape)                    # (1,384,224,6)
         in_tensor = torch.from_numpy(input_data).float().permute(0, 3, 1, 2)  # (1,6,384,224)
-        in_tensor = in_tensor.to(self.device)
+        # in_tensor = in_tensor.to(self.device)
         print(f"[TRANS_goal] in_tensor.shape: {in_tensor.shape}")
 
         # goal image --> Torch tensor
@@ -129,7 +130,7 @@ class TransportGoal:
         goal_shape = (1,) + goal_data.shape
         goal_data = goal_data.reshape(goal_shape)                       # (1,384,224,6)
         goal_tensor = torch.from_numpy(goal_data).float().permute(0, 3, 1, 2) # (1,6,384,224)
-        goal_tensor = goal_tensor.to(self.device)
+        # goal_tensor = goal_tensor.to(self.device)
         print(f"[TRANS_goal] goal_tensor.shape: {goal_tensor.shape}")
 
         # Get SE2 rotation vectors for cropping.
@@ -208,7 +209,7 @@ class TransportGoal:
         """
         # self.metric.reset_states()
         output = self.forward(in_img, goal_img, p, apply_softmax=False) # still in pytorch format and on device
-        output = output.to(self.device)
+        # output = output.to(self.device)
 
         # Compute label
         itheta = theta / (2 * np.pi / self.num_rotations)
