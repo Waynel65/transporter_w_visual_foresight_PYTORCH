@@ -212,7 +212,11 @@ print(tf_out)
 print("pytorch output")
 print(torch_no_permute)
 
-print(np.allclose(torch_no_permute.numpy(), tf_out.numpy(), atol=1e-6))
+# print(np.allclose(torch_no_permute.numpy(), tf_out.numpy(), atol=1e-6))
+plt.imshow(torch_no_permute[0,0,:,:].numpy())
+plt.show()
+plt.imshow(tf_out[0,:,:,0].numpy())
+plt.show()
 
 
 
