@@ -83,8 +83,9 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     kernel = crop[:, :,
                 p[0]:(p[0] + crop_size),
                 p[1]:(p[1] + crop_size)]
+    # this somehow becomes (24,64,3,64)
 
-    kernel = kernel.permute(0, 3, 1, 2)
+    kernel = kernel.permute(0, 2, 3, 1)
 
     return kernel
 
@@ -181,8 +182,9 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
                     p[0]:(p[0] + crop_size),
                     p[1]:(p[1] + crop_size),
                     :]
+    # this becomes (24,64,64,3)
 
-    return kernel
+    return kernel 
 
     # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
