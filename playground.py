@@ -15,9 +15,9 @@ pdb.set_trace()
 # assuming this is the output from the resnet model
 # randomly generate tensors of shape (1,3,224,224)
 
-in_logits = torch.rand(1,3,10,10)
-kernel_nocrop_logits = torch.rand(1,3,10,10)
-goal_logits = torch.rand(1,3,10,10)
+in_logits = torch.rand(1,3,224,224)
+kernel_nocrop_logits = torch.rand(1,3,224,224)
+goal_logits = torch.rand(1,3,224,224)
 
 in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
 kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
@@ -127,6 +127,8 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
     output = (1 / (crop_size**2)) * output
 
+    return output
+
 
 
 torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
@@ -135,6 +137,8 @@ tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 # compare if they are the same in terms of value positions and values
 print(torch_out)
 print(tf_out)
+
+print(np.array_equal(torch_out.numpy(), tf_out.numpy()))
 
 
 
