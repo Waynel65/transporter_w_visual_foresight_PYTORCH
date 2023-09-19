@@ -64,13 +64,6 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
-    # Inside testing_torch after goal_x_in_logits computation:
-    print("PyTorch goal_x_in_logits shape:", goal_x_in_logits.shape)
-    print("PyTorch goal_x_in_logits mean:", goal_x_in_logits.mean().item())
-    print("PyTorch goal_x_in_logits max:", goal_x_in_logits.max().item())
-    print("PyTorch goal_x_in_logits min:", goal_x_in_logits.min().item())
-
-
     num_rotations = 24
     p = [130,33]
     crop_size = 64
