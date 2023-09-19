@@ -84,14 +84,14 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
         rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
     crop = rotated_crop
 
-    pdb.set_trace()
-    kernel = crop[:, :,
-                p[0]:(p[0] + crop_size),
-                p[1]:(p[1] + crop_size)]
+    return crop
+    # pdb.set_trace()
+    # kernel = crop[:, :,
+    #             p[0]:(p[0] + crop_size),
+    #             p[1]:(p[1] + crop_size)]
 
-    kernel = kernel.permute(0, 2, 3, 1)
+    # kernel = kernel.permute(0, 2, 3, 1)
 
-    return kernel
 
     # # need to permute back to pytorch convention
     # # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
@@ -180,17 +180,19 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
     crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
 
-    pdb.set_trace()
+    return crop
 
-    kernel = crop[:,
-                    p[0]:(p[0] + crop_size),
-                    p[1]:(p[1] + crop_size),
-                    :]
-    # this becomes (24,64,64,3)
+    # pdb.set_trace()
 
-    return kernel 
+    # kernel = crop[:,
+    #                 p[0]:(p[0] + crop_size),
+    #                 p[1]:(p[1] + crop_size),
+    #                 :]
+    # # this becomes (24,64,64,3)
 
-    # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
+    # # return kernel 
+
+    # # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
     # # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
     # kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
