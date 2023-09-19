@@ -62,8 +62,9 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
     num_rotations = 24
     p = [130,33]
+    crop_size = 64
 
-    pad_size = int(64 / 2)
+    pad_size = int(crop_size / 2)
     pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
     rvecs = get_se2(num_rotations, pivot)
 
@@ -78,8 +79,8 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     crop = rotated_crop
 
     kernel = crop[:,
-            p[0]:(p[0] + self.crop_size),
-            p[1]:(p[1] + self.crop_size),
+            p[0]:(p[0] + crop_size),
+            p[1]:(p[1] + crop_size),
             :]
 
     # need to permute back to pytorch convention
@@ -87,7 +88,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     kernel = kernel.permute(0, 3, 1, 2)
     kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
     output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
-    output = (1 / (self.crop_size**2)) * output # normalization
+    output = (1 / (crop_size**2)) * output # normalization
 
     # permute back to tensorflow convention before output
     output = output.permute(0, 2, 3, 1)
@@ -102,9 +103,10 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
 
     num_rotations = 24
+    crop_size = 64
 
     p = [130,33]
-    pad_size = int(64 / 2)
+    pad_size = int(crop_size / 2)
     pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
     rvecs = get_se2(num_rotations, pivot)
 
@@ -113,17 +115,17 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
     crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
     kernel = crop[:,
-                    p[0]:(p[0] + self.crop_size),
-                    p[1]:(p[1] + self.crop_size),
+                    p[0]:(p[0] + crop_size),
+                    p[1]:(p[1] + crop_size),
                     :]
-    print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
+    # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
     # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
     kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
     kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
     kernel = tf.transpose(kernel, [1, 2, 3, 0])
     output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
-    output = (1 / (self.crop_size**2)) * output
+    output = (1 / (crop_size**2)) * output
 
 
 
