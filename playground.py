@@ -81,8 +81,8 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
 
     pdb.set_trace()
     kernel = crop[:, :,
-                p[0]:(p[0] + self.crop_size),
-                p[1]:(p[1] + self.crop_size)]
+                p[0]:(p[0] + crop_size),
+                p[1]:(p[1] + crop_size)]
 
     # need to permute back to pytorch convention
     # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
