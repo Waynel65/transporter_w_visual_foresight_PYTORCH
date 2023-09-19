@@ -9,7 +9,7 @@ import torchvision.transforms as T
 
 # from ravens import utils
 
-pdb.set_trace()
+# pdb.set_trace()
 # PyTorch
 
 # assuming this is the output from the resnet model
@@ -52,6 +52,7 @@ def get_se2(num_rotations, pivot):
 
 def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     # to test if permute back to tf convention before rotation will cause any problems
+    pdb.set_trace()
     in_logits = in_logits.permute(0, 2, 3, 1)
     kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
     goal_logits = goal_logits.permute(0, 2, 3, 1)
@@ -78,6 +79,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
         rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
     crop = rotated_crop
 
+    pdb.set_trace()
     kernel = crop[:,
             p[0]:(p[0] + crop_size),
             p[1]:(p[1] + crop_size),
@@ -98,6 +100,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
 def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     # Use features from goal logits and combine with input and kernel.
+    pdb.set_trace()
     goal_x_in_logits     = tf.multiply(goal_logits, in_logits)
     goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
 
@@ -114,10 +117,14 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
     crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
+
+    pdb.set_trace()
+
     kernel = crop[:,
                     p[0]:(p[0] + crop_size),
                     p[1]:(p[1] + crop_size),
                     :]
+
     # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
     # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
