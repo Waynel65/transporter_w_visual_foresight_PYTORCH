@@ -7,7 +7,7 @@ import numpy as np
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-from ravens import utils
+# from ravens import utils
 
 pdb.set_trace()
 # PyTorch
@@ -23,6 +23,21 @@ in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
 kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
 goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0, 2, 3, 1).numpy())
 
+def get_image_transform(theta, trans, pivot=[0, 0]):
+    # Get 2D rigid transformation matrix that rotates an image by theta (in
+    # radians) around pivot (in pixels) and translates by trans vector (in
+    # pixels)
+    pivot_T_image = np.array([[1., 0., -pivot[0]],
+                              [0., 1., -pivot[1]],
+                              [0., 0.,        1.]])
+    image_T_pivot = np.array([[1., 0., pivot[0]],
+                              [0., 1., pivot[1]],
+                              [0., 0.,       1.]])
+    transform = np.array([[np.cos(theta), -np.sin(theta), trans[0]],
+                          [np.sin(theta), np.cos(theta), trans[1]],
+                          [0.,            0.,            1.]])
+    return np.dot(image_T_pivot, np.dot(transform, pivot_T_image))
+
 def get_se2(num_rotations, pivot):
     '''
     Get SE2 rotations discretized into num_rotations angles counter-clockwise.
@@ -30,7 +45,7 @@ def get_se2(num_rotations, pivot):
     rvecs = []
     for i in range(num_rotations):
         theta = i * 2 * np.pi / num_rotations
-        rmat = utils.get_image_transform(theta, (0, 0), pivot)
+        rmat = get_image_transform(theta, (0, 0), pivot)
         rvec = rmat.reshape(-1)[:-1]
         rvecs.append(rvec)
     return np.array(rvecs, dtype=np.float32)
@@ -87,7 +102,7 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
 
     num_rotations = 24
-    
+
     p = [130,33]
     pad_size = int(64 / 2)
     pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
