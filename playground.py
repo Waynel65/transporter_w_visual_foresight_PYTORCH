@@ -45,12 +45,13 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
+    num_rotations = 24
     p = [130,33]
+
     pad_size = int(64 / 2)
     pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
     rvecs = get_se2(num_rotations, pivot)
 
-    num_rotations = 24
     crop = goal_x_kernel_logits.clone()                                 
     crop = crop.repeat(num_rotations, 1, 1, 1)
 
@@ -85,6 +86,8 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
 
 
+    num_rotations = 24
+    
     p = [130,33]
     pad_size = int(64 / 2)
     pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
@@ -93,7 +96,6 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     # Crop the kernel_logits about the picking point and get rotations.
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
-    num_rotations = 24
     crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
     kernel = crop[:,
                     p[0]:(p[0] + self.crop_size),
