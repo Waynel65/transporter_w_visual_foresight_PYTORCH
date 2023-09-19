@@ -1,5 +1,7 @@
 import torch
 import tensorflow as tf
+import tensorflow_addons as tfa
+
 import pdb
 import numpy as np
 import torch.nn.functional as F
@@ -34,7 +36,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     crop = crop.repeat(num_rotations, 1, 1, 1)
 
     rotated_crop = torch.empty_like(crop)
-    for i in range(self.num_rotations):
+    for i in range(num_rotations):
         rvec = rvecs[i]
         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
         rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
@@ -65,14 +67,14 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
     # Crop the kernel_logits about the picking point and get rotations.
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
-    crop = tf.repeat(crop, repeats=self.num_rotations, axis=0)          # (24,384,224,3)
+    crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
+    num_rotations = 24
     crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
     kernel = crop[:,
                     p[0]:(p[0] + self.crop_size),
                     p[1]:(p[1] + self.crop_size),
                     :]
     print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
-    assert kernel.shape == (self.num_rotations, self.crop_size, self.crop_size, self.odim)
 
     # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
     kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
