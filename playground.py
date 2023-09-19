@@ -18,9 +18,14 @@ import matplotlib.pyplot as plt
 # randomly generate tensors of shape (1,3,224,224)
 
 pdb.set_trace()
-in_logits = torch.rand(1,1,14,14)
-kernel_nocrop_logits = torch.rand(1,1,14,14)
-goal_logits = torch.rand(1,1,14,14)
+def create_custom_tensor():
+    row = torch.arange(1, 15).unsqueeze(0)
+    tensor = row.repeat(14, 1).unsqueeze(0).unsqueeze(0)
+    return tensor
+
+in_logits = create_custom_tensor()
+kernel_nocrop_logits = create_custom_tensor()
+goal_logits = create_custom_tensor()
 
 in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
 kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
