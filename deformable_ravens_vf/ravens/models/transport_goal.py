@@ -141,7 +141,7 @@ class TransportGoal:
         # pdb.set_trace()
         # pytorch convention start #
         in_logits, kernel_nocrop_logits, goal_logits = self.model(in_tensor, goal_tensor)
-        
+
         # conduct re-permute here to avoid problems
         in_logits = in_logits.permute(0, 2, 3, 1)
         kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
@@ -153,7 +153,7 @@ class TransportGoal:
 
         # Crop the kernel_logits about the picking point and get rotations.
         crop = goal_x_kernel_logits.clone()                                 # (1,3,384,224)
-        crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224)
+        crop = crop.repeat(self.num_rotations, 1, 1, 1)                     # (24,3,384,224) num_rotation = 24
 
         rotated_crop = torch.empty_like(crop)
         for i in range(self.num_rotations):
