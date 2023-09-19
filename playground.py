@@ -135,7 +135,9 @@ torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
 tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
 # compare if they are the same in terms of value positions and values
+print("pytorch output")
 print(torch_out)
+print("tensorflow output")
 print(tf_out)
 
 print(np.array_equal(torch_out.numpy(), tf_out.numpy()))
