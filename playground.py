@@ -84,17 +84,21 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
                 p[0]:(p[0] + crop_size),
                 p[1]:(p[1] + crop_size)]
 
-    # need to permute back to pytorch convention
-    # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
-    # kernel = kernel.permute(0, 3, 1, 2)
-    kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
-    output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
-    output = (1 / (crop_size**2)) * output # normalization
+    kernel = kernel.permute(0, 3, 1, 2)
 
-    # permute back to tensorflow convention before output
-    output = output.permute(0, 2, 3, 1)
+    return kernel
 
-    return output
+    # # need to permute back to pytorch convention
+    # # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
+    # # kernel = kernel.permute(0, 3, 1, 2)
+    # kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+    # output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
+    # output = (1 / (crop_size**2)) * output # normalization
+
+    # # permute back to tensorflow convention before output
+    # output = output.permute(0, 2, 3, 1)
+
+    # return output
 
 def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     # to test if permute back to tf convention before rotation will cause any problems
@@ -178,16 +182,18 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
                     p[1]:(p[1] + crop_size),
                     :]
 
+    return kernel
+
     # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
-    # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
-    kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
-    kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
-    kernel = tf.transpose(kernel, [1, 2, 3, 0])
-    output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
-    output = (1 / (crop_size**2)) * output
+    # # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
+    # kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
+    # kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
+    # kernel = tf.transpose(kernel, [1, 2, 3, 0])
+    # output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
+    # output = (1 / (crop_size**2)) * output
 
-    return output
+    # return output
 
 
 torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
