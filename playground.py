@@ -7,6 +7,8 @@ import numpy as np
 import torch.nn.functional as F
 import torchvision.transforms as T
 
+from ravens import utils
+
 pdb.set_trace()
 # PyTorch
 
@@ -21,6 +23,18 @@ in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
 kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
 goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0, 2, 3, 1).numpy())
 
+def get_se2(num_rotations, pivot):
+    '''
+    Get SE2 rotations discretized into num_rotations angles counter-clockwise.
+    '''
+    rvecs = []
+    for i in range(num_rotations):
+        theta = i * 2 * np.pi / num_rotations
+        rmat = utils.get_image_transform(theta, (0, 0), pivot)
+        rvec = rmat.reshape(-1)[:-1]
+        rvecs.append(rvec)
+    return np.array(rvecs, dtype=np.float32)
+
 def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     # to test if permute back to tf convention before rotation will cause any problems
     in_logits = in_logits.permute(0, 2, 3, 1)
@@ -30,6 +44,11 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     # Use features from goal logits and combine with input and kernel.
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
+
+    p = [130,33]
+    pad_size = int(64 / 2)
+    pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
+    rvecs = get_se2(num_rotations, pivot)
 
     num_rotations = 24
     crop = goal_x_kernel_logits.clone()                                 
@@ -64,6 +83,12 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     # Use features from goal logits and combine with input and kernel.
     goal_x_in_logits     = tf.multiply(goal_logits, in_logits)
     goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
+
+
+    p = [130,33]
+    pad_size = int(64 / 2)
+    pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
+    rvecs = get_se2(num_rotations, pivot)
 
     # Crop the kernel_logits about the picking point and get rotations.
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
