@@ -7,6 +7,8 @@ import numpy as np
 import torch.nn.functional as F
 import torchvision.transforms as T
 
+import matplotlib.pyplot as plt
+
 # from ravens import utils
 
 # pdb.set_trace()
@@ -15,6 +17,7 @@ import torchvision.transforms as T
 # assuming this is the output from the resnet model
 # randomly generate tensors of shape (1,3,224,224)
 
+pdb.set_trace()
 in_logits = torch.rand(1,3,224,224)
 kernel_nocrop_logits = torch.rand(1,3,224,224)
 goal_logits = torch.rand(1,3,224,224)
@@ -61,6 +64,13 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
+    # Inside testing_torch after goal_x_in_logits computation:
+    print("PyTorch goal_x_in_logits shape:", goal_x_in_logits.shape)
+    print("PyTorch goal_x_in_logits mean:", goal_x_in_logits.mean().item())
+    print("PyTorch goal_x_in_logits max:", goal_x_in_logits.max().item())
+    print("PyTorch goal_x_in_logits min:", goal_x_in_logits.min().item())
+
+
     num_rotations = 24
     p = [130,33]
     crop_size = 64
@@ -103,6 +113,13 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     pdb.set_trace()
     goal_x_in_logits     = tf.multiply(goal_logits, in_logits)
     goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
+
+    # Inside testing_tf after goal_x_in_logits computation:
+    print("TensorFlow goal_x_in_logits shape:", goal_x_in_logits.shape)
+    print("TensorFlow goal_x_in_logits mean:", tf.reduce_mean(goal_x_in_logits).numpy())
+    print("TensorFlow goal_x_in_logits max:", tf.reduce_max(goal_x_in_logits).numpy())
+    print("TensorFlow goal_x_in_logits min:", tf.reduce_min(goal_x_in_logits).numpy())
+
 
 
     num_rotations = 24
@@ -147,7 +164,8 @@ print(torch_out)
 print("tensorflow output")
 print(tf_out)
 
-print(np.array_equal(torch_out.numpy(), tf_out.numpy()))
+print(np.allclose(torch_out.numpy(), tf_out.numpy(), atol=1e-6))
+
 
 
 
