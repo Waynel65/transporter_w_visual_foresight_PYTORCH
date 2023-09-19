@@ -84,6 +84,7 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
         rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
     crop = rotated_crop
 
+    crop = crop.permute(0,2,3,1)
     return crop
     # pdb.set_trace()
     # kernel = crop[:, :,
