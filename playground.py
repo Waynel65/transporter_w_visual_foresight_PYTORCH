@@ -53,6 +53,49 @@ def get_se2(num_rotations, pivot):
         rvecs.append(rvec)
     return np.array(rvecs, dtype=np.float32)
 
+
+def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
+    pdb.set_trace()
+
+    # Use features from goal logits and combine with input and kernel.
+    goal_x_in_logits     = goal_logits * in_logits
+    goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
+
+    num_rotations = 24
+    p = [130,33]
+    crop_size = 64
+
+    pad_size = int(crop_size / 2)
+    pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
+    rvecs = get_se2(num_rotations, pivot)
+
+    crop = goal_x_kernel_logits.clone()                                 
+    crop = crop.repeat(num_rotations, 1, 1, 1)
+
+    rotated_crop = torch.empty_like(crop)
+    for i in range(num_rotations):
+        rvec = rvecs[i]
+        angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+        rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+    crop = rotated_crop
+
+    pdb.set_trace()
+    kernel = crop[:, :,
+                p[0]:(p[0] + self.crop_size),
+                p[1]:(p[1] + self.crop_size)]
+
+    # need to permute back to pytorch convention
+    # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
+    # kernel = kernel.permute(0, 3, 1, 2)
+    kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+    output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
+    output = (1 / (crop_size**2)) * output # normalization
+
+    # permute back to tensorflow convention before output
+    output = output.permute(0, 2, 3, 1)
+
+    return output
+
 def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     # to test if permute back to tf convention before rotation will cause any problems
     pdb.set_trace()
@@ -147,17 +190,21 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     return output
 
 
-
+torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
 torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
 tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
 # compare if they are the same in terms of value positions and values
-print("pytorch output")
-print(torch_out)
+# print("pytorch output")
+# print(torch_out)
+
 print("tensorflow output")
 print(tf_out)
 
-print(np.allclose(torch_out.numpy(), tf_out.numpy(), atol=1e-6))
+print("pytorch output")
+print(torch_no_permute)
+
+print(np.allclose(torch_no_permute.numpy(), tf_out.numpy(), atol=1e-6))
 
 
 
