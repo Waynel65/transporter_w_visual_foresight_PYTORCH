@@ -31,6 +31,18 @@ in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
 kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
 goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0, 2, 3, 1).numpy())
 
+# if we permute back to tf convention before rotation, would they be the same?
+in_logits = in_logits.permute(0, 2, 3, 1)
+kernel_nocrop_logits = kernel_nocrop_logits.permute(0, 2, 3, 1)
+goal_logits = goal_logits.permute(0, 2, 3, 1)
+print(np.allclose(in_logits.numpy(), in_logits_tf, atol=1e-6))
+print(np.allclose(kernel_nocrop_logits.numpy(), kernel_nocrop_logits_tf, atol=1e-6))
+print(np.allclose(goal_logits.numpy(), goal_logits_tf, atol=1e-6))
+
+
+
+
+
 def get_image_transform(theta, trans, pivot=[0, 0]):
     # Get 2D rigid transformation matrix that rotates an image by theta (in
     # radians) around pivot (in pixels) and translates by trans vector (in
