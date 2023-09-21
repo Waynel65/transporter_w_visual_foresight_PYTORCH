@@ -143,6 +143,8 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
     crop = goal_x_kernel_logits.clone()                                 
     crop = crop.repeat(num_rotations, 1, 1, 1)
+    return crop
+
 
     rotated_crop = torch.empty_like(crop)
     for i in range(num_rotations):
@@ -152,7 +154,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     crop = rotated_crop
     # pdb.set_trace()
 
-    return crop
+    # return crop
 
     # kernel = crop[:,
     #         p[0]:(p[0] + crop_size),
@@ -191,8 +193,9 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
 
-    crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
     return crop
+    # crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
+    # return crop
 
     # return crop
 
