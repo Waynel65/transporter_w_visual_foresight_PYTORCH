@@ -220,7 +220,7 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
 torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
 tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
-
+pdb.set_trace()
 # compare if they are the same in terms of value positions and values
 # print("pytorch output")
 # print(torch_out)
