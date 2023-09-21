@@ -82,9 +82,6 @@ def rotate_tensor(input_tensor, rvecs, pivot):
     output = F.grid_sample(input_tensor, grid, mode='nearest')
     return output
 
-# Assuming crop is a tensor of shape (batch_size, channels, height, width)
-rotated_crop = rotate_tensor(crop, rvecs)
-
 
 
 def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
