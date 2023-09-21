@@ -63,7 +63,7 @@ def get_se2(num_rotations, pivot):
 
 
 def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
-    pdb.set_trace()
+
 
     # Use features from goal logits and combine with input and kernel.
     goal_x_in_logits     = goal_logits * in_logits
@@ -88,6 +88,7 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
         rotated_crop[i] = TF.rotate(crop[i], angle)
     crop = rotated_crop
+    pdb.set_trace()
 
         #     rotated_tens = torch.empty_like(in_tens)
         # for i in range(self.num_rotations):
