@@ -68,6 +68,10 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
+    # permute before output
+    goal_x_in_logits = goal_x_in_logits.permute(0, 2, 3, 1)
+    goal_x_kernel_logits = goal_x_kernel_logits.permute(0, 2, 3, 1)
+
     return goal_x_in_logits, goal_x_kernel_logits
 
     # num_rotations = 24
@@ -203,8 +207,11 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
 
 # torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
-torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
-tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+# torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
+# tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+
+torch_1, torch2 = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
+tf_1, tf_2 = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
 # compare if they are the same in terms of value positions and values
 # print("pytorch output")
@@ -216,7 +223,8 @@ print(tf_out)
 print("pytorch output")
 print(torch_no_permute)
 
-print(np.allclose(torch_no_permute.numpy(), tf_out.numpy(), atol=1e-6))
+print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
+print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
 # plt.imshow(torch_no_permute[0,0,:,:].numpy())
 # plt.show()
 # plt.imshow(tf_out[0,:,:,0].numpy())
