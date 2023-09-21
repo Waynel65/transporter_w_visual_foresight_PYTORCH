@@ -80,16 +80,16 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     crop = goal_x_kernel_logits.clone()                                 
     crop = crop.repeat(num_rotations, 1, 1, 1)
 
+
+    rotated_crop = torch.empty_like(crop)
+    for i in range(num_rotations):
+        rvec = rvecs[i]
+        angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+        rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+    crop = rotated_crop
+
     crop = crop.permute(0, 2, 3, 1)
     return crop
-
-    # rotated_crop = torch.empty_like(crop)
-    # for i in range(num_rotations):
-    #     rvec = rvecs[i]
-    #     angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-    #     rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
-    # crop = rotated_crop
-
 
     # pdb.set_trace()
     # kernel = crop[:, :,
@@ -178,8 +178,8 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
     crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
 
+    crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
     return crop
-    # crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
 
     # return crop
 
