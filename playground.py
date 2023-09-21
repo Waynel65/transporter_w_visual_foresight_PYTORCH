@@ -217,11 +217,11 @@ tf_1, tf_2 = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 # print("pytorch output")
 # print(torch_out)
 
-print("tensorflow output")
-print(tf_out)
+# print("tensorflow output")
+# print(tf_out)
 
-print("pytorch output")
-print(torch_no_permute)
+# print("pytorch output")
+# print(torch_no_permute)
 
 print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
 print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
