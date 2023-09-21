@@ -4,7 +4,8 @@ import tensorflow_addons as tfa
 
 import pdb
 import numpy as np
-import torch.nn.functional as F
+# import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
 import matplotlib.pyplot as plt
@@ -85,8 +86,15 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     for i in range(num_rotations):
         rvec = rvecs[i]
         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-        rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+        rotated_crop[i] = TF.rotate(crop[i], angle)
     crop = rotated_crop
+
+        #     rotated_tens = torch.empty_like(in_tens)
+        # for i in range(self.num_rotations):
+        #     rvec = rvecs[i]
+        #     angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
+        #     rotated_tens[i] = TF.rotate(in_tens[i], angle)
+        # in_tens = rotated_tens
 
     crop = crop.permute(0, 2, 3, 1)
     return crop
