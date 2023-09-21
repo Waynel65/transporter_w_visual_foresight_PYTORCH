@@ -82,6 +82,8 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     crop = crop.repeat(num_rotations, 1, 1, 1)
 
 
+
+
     rotated_crop = torch.empty_like(crop)
     for i in range(num_rotations):
         rvec = rvecs[i]
@@ -146,26 +148,28 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     for i in range(num_rotations):
         rvec = rvecs[i]
         angle = np.arctan2(rvec[1], rvec[0]) * 180 / np.pi
-        rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
+        rotated_crop[i] = TF.rotate(crop[i], angle)
     crop = rotated_crop
+    # pdb.set_trace()
 
-    pdb.set_trace()
-    kernel = crop[:,
-            p[0]:(p[0] + crop_size),
-            p[1]:(p[1] + crop_size),
-            :]
+    return crop
 
-    # need to permute back to pytorch convention
-    goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
-    kernel = kernel.permute(0, 3, 1, 2)
-    kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
-    output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
-    output = (1 / (crop_size**2)) * output # normalization
+    # kernel = crop[:,
+    #         p[0]:(p[0] + crop_size),
+    #         p[1]:(p[1] + crop_size),
+    #         :]
 
-    # permute back to tensorflow convention before output
-    output = output.permute(0, 2, 3, 1)
+    # # need to permute back to pytorch convention
+    # goal_x_in_logits = goal_x_in_logits.permute(0, 3, 1, 2)
+    # kernel = kernel.permute(0, 3, 1, 2)
+    # kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+    # output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
+    # output = (1 / (crop_size**2)) * output # normalization
 
-    return output
+    # # permute back to tensorflow convention before output
+    # output = output.permute(0, 2, 3, 1)
+
+    # return output
 
 
 def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
@@ -214,11 +218,9 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     # return output
 
 
-# torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
-# torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
-# tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
-torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
+torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
+# torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
 tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 pdb.set_trace()
 # compare if they are the same in terms of value positions and values
@@ -229,11 +231,11 @@ print("tensorflow output")
 print(tf_out)
 
 print("pytorch output")
-print(torch_no_permute)
+print(torch_out)
 
 # print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
 # print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
-print(np.allclose(torch_no_permute.numpy(), tf_out, atol=1e-6))
+print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
 
 # plt.imshow(torch_no_permute[0,0,:,:].numpy())
 # plt.show()
