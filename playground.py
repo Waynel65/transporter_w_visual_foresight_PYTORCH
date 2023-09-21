@@ -4,7 +4,7 @@ import tensorflow_addons as tfa
 
 import pdb
 import numpy as np
-# import torch.nn.functional as F
+import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
