@@ -77,6 +77,7 @@ def rotate_tensor(input_tensor, rvecs, pivot):
     pivot = torch.tensor(pivot, device=angles.device).float()
     theta[:, :, 2] = (1 - theta[:, :, 0] - theta[:, :, 1]) * pivot.unsqueeze(0)
 
+    input_tensor = input_tensor.float()
     # Compute rotation using affine transformations
     grid = F.affine_grid(theta, input_tensor.size())
     output = F.grid_sample(input_tensor, grid, mode='nearest')
