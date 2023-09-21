@@ -68,22 +68,20 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = goal_logits * in_logits
     goal_x_kernel_logits = goal_logits * kernel_nocrop_logits
 
-    # permute before output
-    goal_x_in_logits = goal_x_in_logits.permute(0, 2, 3, 1)
-    goal_x_kernel_logits = goal_x_kernel_logits.permute(0, 2, 3, 1)
 
-    return goal_x_in_logits, goal_x_kernel_logits
+    num_rotations = 24
+    p = [5,5]
+    crop_size = 4
 
-    # num_rotations = 24
-    # p = [5,5]
-    # crop_size = 4
+    pad_size = int(crop_size / 2)
+    pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
+    rvecs = get_se2(num_rotations, pivot)
 
-    # pad_size = int(crop_size / 2)
-    # pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
-    # rvecs = get_se2(num_rotations, pivot)
+    crop = goal_x_kernel_logits.clone()                                 
+    crop = crop.repeat(num_rotations, 1, 1, 1)
 
-    # crop = goal_x_kernel_logits.clone()                                 
-    # crop = crop.repeat(num_rotations, 1, 1, 1)
+    crop = crop.permute(0, 2, 3, 1)
+    return crop
 
     # rotated_crop = torch.empty_like(crop)
     # for i in range(num_rotations):
@@ -92,7 +90,7 @@ def testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits):
     #     rotated_crop[i] = T.functional.rotate(crop[i], angle, interpolation=T.InterpolationMode.NEAREST)
     # crop = rotated_crop
 
-    # crop = crop.permute(0,2,3,1)
+
     # pdb.set_trace()
     # kernel = crop[:, :,
     #             p[0]:(p[0] + crop_size),
@@ -167,19 +165,20 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     goal_x_in_logits     = tf.multiply(goal_logits, in_logits)
     goal_x_kernel_logits = tf.multiply(goal_logits, kernel_nocrop_logits)
 
-    return goal_x_in_logits, goal_x_kernel_logits
 
-    # num_rotations = 24
-    # p = [5,5]
-    # crop_size = 4
+    num_rotations = 24
+    p = [5,5]
+    crop_size = 4
 
-    # pad_size = int(crop_size / 2)
-    # pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
-    # rvecs = get_se2(num_rotations, pivot)
+    pad_size = int(crop_size / 2)
+    pivot = np.array([p[1], p[0]]) + pad_size # here p is based on the output of attention
+    rvecs = get_se2(num_rotations, pivot)
 
-    # # Crop the kernel_logits about the picking point and get rotations.
-    # crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
-    # crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
+    # Crop the kernel_logits about the picking point and get rotations.
+    crop = tf.identity(goal_x_kernel_logits)                            # (1,384,224,3)
+    crop = tf.repeat(crop, repeats=num_rotations, axis=0)          # (24,384,224,3)
+
+    return crop
     # crop = tfa.image.transform(crop, rvecs, interpolation='NEAREST')    # (24,384,224,3)
 
     # return crop
@@ -210,21 +209,23 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 # torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
 # tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
-torch_1, torch_2 = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
-tf_1, tf_2 = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+torch_no_permute = testing_torch_no_prepermute(in_logits, kernel_nocrop_logits, goal_logits)
+tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
 
 # compare if they are the same in terms of value positions and values
 # print("pytorch output")
 # print(torch_out)
 
-# print("tensorflow output")
-# print(tf_out)
+print("tensorflow output")
+print(tf_out)
 
-# print("pytorch output")
-# print(torch_no_permute)
+print("pytorch output")
+print(torch_no_permute)
 
-print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
-print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
+# print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
+# print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
+print(np.allclose(torch_no_permute.numpy(), tf_out, atol=1e-6))
+
 # plt.imshow(torch_no_permute[0,0,:,:].numpy())
 # plt.show()
 # plt.imshow(tf_out[0,:,:,0].numpy())
