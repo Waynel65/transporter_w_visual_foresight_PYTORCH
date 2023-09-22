@@ -172,10 +172,10 @@ if __name__ == "__main__":
     kernel_nocrop_logits = create_custom_tensor()
     goal_logits = create_custom_tensor()
 
-    # convert to tensorflow tensors
-    in_logits_tf = tf.convert_to_tensor(in_logits.numpy())
-    kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.numpy())
-    goal_logits_tf = tf.convert_to_tensor(goal_logits.numpy())
+    # convert to tensorflow tensors with permuted dimensions
+    in_logits_tf = tf.convert_to_tensor(in_logits.permute(0,2,3,1).numpy())
+    kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0,2,3,1).numpy())
+    goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0,2,3,1).numpy())
 
     # run each version's function
     torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
