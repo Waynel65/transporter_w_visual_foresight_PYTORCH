@@ -110,16 +110,16 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
                     :]
 
 
+    return kernel
     # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
     # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
-    kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
-    kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
-    kernel = tf.transpose(kernel, [1, 2, 3, 0])
-    output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
-    output = (1 / (crop_size**2)) * output
+    # kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
+    # kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
+    # kernel = tf.transpose(kernel, [1, 2, 3, 0])
+    # output = tf.nn.convolution(goal_x_in_logits, kernel, data_format="NHWC")
+    # output = (1 / (crop_size**2)) * output
 
-    return output
 
 def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
@@ -154,16 +154,18 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
                 p[0]:(p[0] + crop_size),
                 p[1]:(p[1] + crop_size)]
 
-    # finally a 2D convolution before output
-    kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
-    output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
-    output = (1 / (crop_size**2)) * output # normalization
+    kernel = kernel.permute(0,2,3,1)
+    return kernel
 
-    # permute back to tensorflow convention before output
-    # so that we can compare with the output from tensorflow
-    output = output.permute(0, 2, 3, 1)
+    # # finally a 2D convolution before output
+    # kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
+    # output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
+    # output = (1 / (crop_size**2)) * output # normalization
 
-    return output
+    # # permute back to tensorflow convention before output
+    # # so that we can compare with the output from tensorflow
+    # output = output.permute(0, 2, 3, 1)
+
 
 
 # define a main function
