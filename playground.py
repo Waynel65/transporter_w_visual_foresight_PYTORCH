@@ -178,8 +178,8 @@ if __name__ == "__main__":
     goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0,2,3,1).numpy())
 
     # run each version's function
-    torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
     tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+    torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
     pdb.set_trace()
 
     print("tensorflow output")
