@@ -166,44 +166,27 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     return output
 
 
+# define a main function
+if __name__ == "__main__":
+    in_logits = create_custom_tensor()
+    kernel_nocrop_logits = create_custom_tensor()
+    goal_logits = create_custom_tensor()
 
+    # convert to tensorflow tensors
+    in_logits_tf = tf.convert_to_tensor(in_logits.numpy())
+    kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.numpy())
+    goal_logits_tf = tf.convert_to_tensor(goal_logits.numpy())
 
+    # run each version's function
+    torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
+    tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+    pdb.set_trace()
 
+    print("tensorflow output")
+    print(tf_out)
 
-torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
-tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
-pdb.set_trace()
-# compare if they are the same in terms of value positions and values
-# print("pytorch output")
-# print(torch_out)
+    print("pytorch output")
+    print(torch_out)
 
-print("tensorflow output")
-print(tf_out)
-
-print("pytorch output")
-print(torch_out)
-
-# print(np.allclose(torch_1.numpy(), tf_1, atol=1e-6))
-# print(np.allclose(torch_2.numpy(), tf_2, atol=1e-6))
-print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
-
-# plt.imshow(torch_no_permute[0,0,:,:].numpy())
-# plt.show()
-# plt.imshow(tf_out[0,:,:,0].numpy())
-# plt.show()
-
-
-
-
-# # TensorFlow
-# goal_x_in_logits_tf = tf.convert_to_tensor(goal_x_in_logits_torch.permute(0, 2, 3, 1).numpy()) # changing to NHWC format
-# kernel_tf = tf.convert_to_tensor(kernel_torch.permute(0,2,3,1).numpy()) # to match TF's order
-
-# output_torch = torch.nn.functional.conv2d(goal_x_in_logits_torch, kernel_torch)
-
-# kernel_tf_transposed = tf.transpose(kernel_tf, [1, 2, 3, 0]) # 
-# output_tf = tf.nn.convolution(goal_x_in_logits_tf, kernel_tf_transposed, data_format="NHWC")
-
-# output_tf_torch = torch.tensor(output_tf.numpy().transpose(0, 3, 1, 2)) # Convert TF tensor to PyTorch format (NCHW)
-# diff = torch.nn.functional.mse_loss(output_torch, output_tf_torch)
-# print(diff.item())
+    print("are they the same?")
+    print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
