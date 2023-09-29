@@ -10,7 +10,7 @@ import torch
 from torchvision.transforms.functional import rotate
 # from tensorflow_addons import image as tfa_image
 
-import pdb
+# import pdb
 
 
 class PPDynamics(object):
@@ -124,7 +124,7 @@ class PPDynamics(object):
 
   def forward_pp(self, init_img, p0, p1, p1_theta):
     """Forward pass."""
-    pdb.set_trace()
+    # pdb.set_trace()
     # init_img should come in as a numpy matrix
     # Pick mask.
     # a mask that is positive around the center but zero elsewhere
@@ -272,7 +272,7 @@ class PPDynamics(object):
 
     # Forward pass.
     out_tens = self.forward_pp(init_img, p0, p1, p1_theta)
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # Get loss.
     # target_tens = tf.convert_to_tensor(target_img, dtype=tf.float32)
