@@ -1,16 +1,16 @@
-import torch
 import tensorflow as tf
 import tensorflow_addons as tfa
 
-import pdb
+import torch
 import numpy as np
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
+import pdb
 import matplotlib.pyplot as plt
 
-
+# GOAL: find out a way to recreate the rotation effect in tensorflow
 
 # preliminary function for creating tensors
 def create_custom_tensor():
@@ -72,6 +72,7 @@ def rotate_tensor(input_tensor, rvecs, pivot):
     return output
 
 
+# actual testing functions
 def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
     """
         this is the original forward function in the tensorflow codebase
@@ -111,9 +112,8 @@ def testing_tf(in_logits, kernel_nocrop_logits, goal_logits):
 
 
     return kernel
-    # print(f"[TRANS_GOAL] kernel shape: {kernel.shape} | the rest: {(self.num_rotations, self.crop_size, self.crop_size, self.odim)}")
 
-    # Cross-convolve `in_x_goal_logits`. Padding kernel: (24,64,64,3) --> (65,65,3,24).
+    # Cross-convolve `in_x_goal_logits` => apparently this part won't work on our custom (smaller) input
     # kernel_paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]])
     # kernel = tf.pad(kernel, kernel_paddings, mode='CONSTANT')
     # kernel = tf.transpose(kernel, [1, 2, 3, 0])
@@ -157,7 +157,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
     kernel = kernel.permute(0,2,3,1)
     return kernel
 
-    # # finally a 2D convolution before output
+    # # finally a 2D convolution before output => apparently this part won't work on our custom (smaller) input
     # kernel = F.pad(kernel, (0, 1, 0, 1)) # this gives (36,3,65,65)
     # output = F.conv2d(goal_x_in_logits, kernel) # regular convolution with output shape (1,36,160,160)
     # output = (1 / (crop_size**2)) * output # normalization
@@ -170,6 +170,7 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
 # define a main function
 if __name__ == "__main__":
+    # creating the input tensors (pretend these are the output from the model)
     in_logits = create_custom_tensor()
     kernel_nocrop_logits = create_custom_tensor()
     goal_logits = create_custom_tensor()
@@ -190,5 +191,6 @@ if __name__ == "__main__":
     print("pytorch output")
     print(torch_out)
 
+    # test if they are the same
     print("are they the same?")
     print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
