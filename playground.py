@@ -10,6 +10,8 @@ import torchvision.transforms as T
 import pdb
 import matplotlib.pyplot as plt
 
+# import pickle
+
 # GOAL: find out a way to recreate the rotation effect in tensorflow
 
 # preliminary function for creating tensors
@@ -169,28 +171,29 @@ def testing_torch(in_logits, kernel_nocrop_logits, goal_logits):
 
 
 # define a main function
-if __name__ == "__main__":
-    # creating the input tensors (pretend these are the output from the model)
-    in_logits = create_custom_tensor()
-    kernel_nocrop_logits = create_custom_tensor()
-    goal_logits = create_custom_tensor()
+# if __name__ == "__main__":
 
-    # convert to tensorflow tensors with permuted dimensions
-    in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
-    kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
-    goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0, 2, 3, 1).numpy())
+#     # # creating the input tensors (pretend these are the output from the model)
+#     # in_logits = create_custom_tensor()
+#     # kernel_nocrop_logits = create_custom_tensor()
+#     # goal_logits = create_custom_tensor()
 
-    # run each version's function
-    torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
-    tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
-    pdb.set_trace()
+#     # # convert to tensorflow tensors with permuted dimensions
+#     # in_logits_tf = tf.convert_to_tensor(in_logits.permute(0, 2, 3, 1).numpy())
+#     # kernel_nocrop_logits_tf = tf.convert_to_tensor(kernel_nocrop_logits.permute(0, 2, 3, 1).numpy())
+#     # goal_logits_tf = tf.convert_to_tensor(goal_logits.permute(0, 2, 3, 1).numpy())
 
-    print("tensorflow output")
-    print(tf_out)
+#     # # run each version's function
+#     # torch_out = testing_torch(in_logits, kernel_nocrop_logits, goal_logits)
+#     # tf_out = testing_tf(in_logits_tf, kernel_nocrop_logits_tf, goal_logits_tf)
+#     # pdb.set_trace()
 
-    print("pytorch output")
-    print(torch_out)
+#     # print("tensorflow output")
+#     # print(tf_out)
 
-    # test if they are the same
-    print("are they the same?")
-    print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
+#     # print("pytorch output")
+#     # print(torch_out)
+
+#     # # test if they are the same
+#     # print("are they the same?")
+#     # print(np.allclose(torch_out.numpy(), tf_out, atol=1e-6))
