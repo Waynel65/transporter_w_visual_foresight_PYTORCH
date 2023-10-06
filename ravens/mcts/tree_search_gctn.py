@@ -8,7 +8,8 @@ from ravens.utils import utils
 from ravens.tasks import cameras
 
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import pdb
